@@ -16,6 +16,7 @@ const TimerState = Object.freeze({
 
 const TIMER_INFO = {
   state: TimerState.COUNTING_DOWN,
+  intervalId: null,
   startTime: null
 };
 
@@ -50,14 +51,17 @@ function step() {
 }
 
 START_BUTTON.addEventListener("click", function () {
-  TIMER_INFO.startTime = Date.now();
+  if (!TIMER_INFO.startTime) {
+    TIMER_INFO.startTime = Date.now();
+    TIMER_INFO.intervalId = setInterval(step, 10);
+  }
 });
 
 STOP_BUTTON.addEventListener("click", function () {
-  COUNTDOWN.innerHTML = "&ndash;&ndash;&ndash;";
-  TIMER_INFO.startTime = null;
+  if (TIMER_INFO.startTime) {
+    clearInterval(TIMER_INFO.intervalId);
+    TIMER_INFO.intervalId = null;
+    COUNTDOWN.innerHTML = "&ndash;&ndash;&ndash;";
+    TIMER_INFO.startTime = null;
+  }
 });
-
-window.onload = function () {
-  setInterval(step, 10);
-};
