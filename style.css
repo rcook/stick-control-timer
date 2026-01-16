@@ -72,3 +72,9 @@ body {
   margin-top: 20px;
   color: white;
 }
+
+#presets li {
+  color: white;
+  list-style-type: none;
+  display: inline;
+}
