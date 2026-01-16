@@ -4,6 +4,9 @@ const DEFAULT_COUNTDOWN_DURATION = 120;
 const DEFAULT_ALERT_DURATION = 10;
 const DEFAULT_PAUSE_DURATION = 5;
 
+const REPETITIONS = 20;
+const RATE = 8;
+
 const PRESETS = document.getElementById("presets");
 const START_BUTTON = document.getElementById("start");
 const STOP_BUTTON = document.getElementById("stop");
@@ -31,16 +34,35 @@ function showPresets(presets) {
     const button = document.createElement("button");
     li.appendChild(button);
 
-    button.countdownDuration = preset.countdownDuration;
-    button.alertDuration = preset.alertDuration;
-    button.pauseDuration = preset.pauseDuration;
-    const s = `${preset.name} (${preset.countdownDuration}/${preset.alertDuration}/${preset.pauseDuration})`;
+    let countdownDuration;
+    let alertDuration;
+    let pauseDuration;
+    let descriptor;
+    if (Object.hasOwn(preset, "bpm")) {
+      countdownDuration = Math.round(60 / preset.bpm * RATE * REPETITIONS);
+      alertDuration = DEFAULT_ALERT_DURATION;
+      pauseDuration = DEFAULT_PAUSE_DURATION;
+      descriptor = null;
+    } else {
+      countdownDuration = preset.countdownDuration;
+      alertDuration = preset.alertDuration;
+      pauseDuration = preset.pauseDuration;
+      descriptor = `${countdownDuration}/${alertDuration}/${pauseDuration}`;
+    }
+
+    button.countdownDuration = countdownDuration;
+    button.alertDuration = alertDuration;
+    button.pauseDuration = pauseDuration;
+
+    const s = descriptor ? `${preset.name} (${descriptor})` : preset.name;
     button.innerText = s;
     button.addEventListener("click", e => {
       COUNTDOWN_DURATION_INPUT.value = e.target.countdownDuration;
       ALERT_DURATION_INPUT.value = e.target.alertDuration;
       PAUSE_DURATION_INPUT.value = e.target.pauseDuration;
     });
+
+
   }
 }
 

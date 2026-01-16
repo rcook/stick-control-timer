@@ -1,10 +1,28 @@
 {
   "presets": [
     {
-      "name": "Hands",
-      "countdownDuration": 120,
-      "alertDuration": 10,
-      "pauseDuration": 5
+      "name": "100bpm",
+      "bpm": 100
+    },
+    {
+      "name": "110bpm",
+      "bpm": 110
+    },
+    {
+      "name": "120bpm",
+      "bpm": 120
+    },
+    {
+      "name": "130bpm",
+      "bpm": 130
+    },
+    {
+      "name": "140bpm",
+      "bpm": 140
+    },
+    {
+      "name": "150bpm",
+      "bpm": 150
     },
     {
       "name": "Feet",
