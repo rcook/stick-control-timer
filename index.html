@@ -365,6 +365,12 @@
         UI.stopButton.click()
       }
     }
+    else if (e.key == "Enter") {
+      UI.startButton.click()
+    }
+    else if (e.key == "Escape") {
+      UI.stopButton.click()
+    }
   });
 
   fetch("data.json")
