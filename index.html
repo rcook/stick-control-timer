@@ -16,6 +16,11 @@
       color: white;
     }
 
+    button:disabled {
+      background-color: grey !important;
+      color:darkgrey !important;
+    }
+
     #container {
       display: grid;
       grid-template-columns: 1fr;
@@ -97,11 +102,11 @@
 
 <body>
   <div id="container">
-    <div id="context" class="cell">exercise 1</div>
-    <div id="time" class="cell alerting">123.4</div>
+    <div id="context" class="cell">&ndash;&ndash;&ndash;</div>
+    <div id="time" class="cell idle">&ndash;&ndash;&ndash;</div>
     <div id="controls" class="cell">
       <button id="start">Start</button>
-      <button id="stop">Stop</button>
+      <button id="stop" disabled>Stop</button>
     </div>
     <div id="settings" class="cell">
       <div id="values">
@@ -282,7 +287,7 @@
           const remaining = this.pauseDuration - seconds;
           if (remaining <= 0) {
             this.state = TimerState.RUNNING;
-            this.#updateMessages(`exercise ${h(this.iteration)}`, h(this.countdownDuration.toFixed(1)), true);
+            this.#updateMessages(`repetition ${h(this.iteration)}`, h(this.countdownDuration.toFixed(1)), true);
             this.startTime = Date.now();
           }
           break;
@@ -296,8 +301,8 @@
 
       let contextDivHtml;
       switch (iteration) {
-        case 1: contextDivHtml = `&rarr; exercise ${h(iteration)}`; break;
-        default: contextDivHtml = `exercise ${h(iteration - 1)} &rarr; ${h(iteration)}`; break;
+        case 1: contextDivHtml = `&rarr; repetition ${h(iteration)}`; break;
+        default: contextDivHtml = `repetition ${h(iteration - 1)} &rarr; ${h(iteration)}`; break;
       }
 
       this.#updateMessages(contextDivHtml, "get ready!", true);
@@ -331,14 +336,18 @@
   const UI = new Ui();
   const TIMER = new Timer(UI);
 
-  UI.startButton.addEventListener("click", () => {
+  UI.startButton.addEventListener("click", e => {
+    UI.startButton.disabled = true;
+    UI.stopButton.disabled = false;
     const countdownDuration = parseInt(UI.countdownDurationInput.value);
     const alertDuration = parseInt(UI.alertDurationInput.value);
     const pauseDuration = parseInt(UI.pauseDurationInput.value);
     TIMER.start(countdownDuration, alertDuration, pauseDuration);
   });
 
-  UI.stopButton.addEventListener("click", () => {
+  UI.stopButton.addEventListener("click", e => {
+    UI.startButton.disabled = false;
+    UI.stopButton.disabled = true;
     TIMER.stop();
   });
 
