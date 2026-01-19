@@ -16,6 +16,24 @@
       background-color: limegreen;
     }
 
+    body.last {
+      animation: blink 0.75s linear infinite;
+    }
+
+    @keyframes blink {
+      0% {
+        background-color: white;
+      }
+
+      50% {
+        background-color: red;
+      }
+
+      100% {
+        background-color: white;
+      }
+    }
+
     #container {
       width: fit-content;
       margin: 0 auto;
@@ -23,11 +41,8 @@
 
     .dots {
       display: flex;
+      min-width: 700px;
       height: 200px;
-    }
-
-    .dots.last {
-      background-color: pink;
     }
 
     .dot {
@@ -86,10 +101,6 @@
       height: 32px;
     }
 
-    .last {
-      color: red;
-    }
-
     #progress-exercise {
       font-size: 3em;
     }
@@ -115,7 +126,7 @@
       </div>
       <fieldset id="fields">
         <div>
-          <input id="tempo" type="number" min="30" max="250" step="1" title="Tempo in quarter notes per minute">
+          <select id="tempo" title="Tempo in quarter notes per minute"></select>
           <label for="tempo">tempo</label>
         </div>
         <div>
@@ -123,16 +134,22 @@
           <label for="exercises">exercises</label>
         </div>
         <div>
-          <input id="repetitions" type="number" min="1" max="100" step="1" title="Number of repetitions per exercise">
+          <select id="repetitions" title="Number of repetitions per exercise">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
           <label for="repetitions">reps</label>
         </div>
         <div>
-          <input id="bars" type="number" min="1" max="4" step="1" title="Number of bars per repetition">
+          <select id="bars" title="Number of bars per repetition"></select>
           <label for="bars">bars</label>
         </div>
         <div>
-          <input id="beats" type="number" min="1" max="16" step="1"
-            title="Beats (with subdivisions determines number of steps in pattern)"">
+          <select id="beats" title="Beats (with subdivisions determines number of steps in pattern)"></select>
           <label for=" beats">beats</label>
         </div>
         <div>
@@ -148,8 +165,12 @@
           <label for="pattern">pattern</label>
         </div>
         <div>
-          <input id="preroll-bars" type="number" min="1" max="100" step="1"
-            title="Sets number of preroll bars played before first exercise starts">
+          <select id="preroll-bars" title="Number of preroll bars played before first exercise starts">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
           <label for="preroll-bars">preroll</label>
         </div>
       </fieldset>
@@ -207,8 +228,8 @@
     return s.substring(0, len).padEnd(len, "D");
   }
 
-  function formatProgress(name, value, count) {
-    return `${name} ${value + 1} of ${count}`;
+  function formatProgress(name, value, count, getReady = false) {
+    return getReady ? `${name} ${value + 1} of ${count} (get ready!)` : `${name} ${value + 1} of ${count}`;
   }
 
   class Queue {
@@ -346,6 +367,7 @@
     #id
     #audioCtx
     #queue
+    #body
     #progressExerciseDiv
     #progressRepetitionDiv
     #progressBarDiv
@@ -364,6 +386,7 @@
       this.#id = options.id;
       this.#audioCtx = options.audioCtx;
       this.#queue = options.queue;
+      this.#body = options.body;
       this.#progressExerciseDiv = options.progressExerciseDiv;
       this.#progressRepetitionDiv = options.progressRepetitionDiv;
       this.#progressBarDiv = options.progressBarDiv;
@@ -432,14 +455,14 @@
         isLastBarOfRepetition = note.currentBar == this.#prerollBars - 1;
         this.#progressExerciseDiv.innerHTML = `preroll &rarr; exercise ${this.#startExercise + 1}`;
         this.#progressRepetitionDiv.innerHTML = IDLE_HTML;
-        this.#progressBarDiv.innerHTML = formatProgress("bar", note.currentBar, this.#prerollBars);
+        this.#progressBarDiv.innerHTML = formatProgress("bar", note.currentBar, this.#prerollBars, isLastBarOfRepetition);
       } else {
         const [exercise, repetition, bar] = this.#position(note.currentBar - this.#prerollBars);
         isLastBarOfRepetition = repetition == this.#repetitions - 1 && bar == this.#bars - 1;
         const isFinished = exercise >= this.#exercises;
         this.#progressExerciseDiv.innerHTML = formatProgress("exercise", exercise, this.#exercises);
         this.#progressRepetitionDiv.innerHTML = formatProgress("rep", repetition, this.#repetitions);
-        this.#progressBarDiv.innerHTML = formatProgress("bar", bar, this.#bars);
+        this.#progressBarDiv.innerHTML = formatProgress("bar", bar, this.#bars, isLastBarOfRepetition);
         this.#lastExercise = exercise;
         if (isFinished) {
           this.#onFinished();
@@ -448,15 +471,9 @@
       }
 
       if (isLastBarOfRepetition) {
-        this.#progressExerciseDiv.classList.add("last");
-        this.#progressRepetitionDiv.classList.add("last");
-        this.#progressBarDiv.classList.add("last");
-        this.#dotsDiv.classList.add("last");
+        this.#body.classList.add("last");
       } else {
-        this.#progressExerciseDiv.classList.remove("last");
-        this.#progressRepetitionDiv.classList.remove("last");
-        this.#progressBarDiv.classList.remove("last");
-        this.#dotsDiv.classList.remove("last");
+        this.#body.classList.remove("last");
       }
 
       return true;
@@ -473,20 +490,21 @@
   }
 
   class App {
+    #body
     #progressExerciseDiv
     #progressRepetitionDiv
     #progressBarDiv
     #dotsDiv
     #startStopBtn
     #fields
-    #tempoInput
+    #tempoSelect
     #exercisesInput
-    #repetitionsInput
-    #barsInput
-    #beatsInput
+    #repetitionsSelect
+    #barsSelect
+    #beatsSelect
     #subdivisionsSelect
     #patternInput
-    #prerollBarsInput
+    #prerollBarsSelect
     #trackerId
     #audioCtx
     #queue
@@ -495,20 +513,21 @@
     #tracker
 
     constructor(document) {
+      this.#body = document.body;
       this.#progressExerciseDiv = document.getElementById("progress-exercise");
       this.#progressRepetitionDiv = document.getElementById("progress-repetition");
       this.#progressBarDiv = document.getElementById("progress-bar");
       this.#dotsDiv = document.getElementById("dots");
       this.#startStopBtn = document.getElementById("start-stop");
       this.#fields = document.getElementById("fields");
-      this.#tempoInput = document.getElementById("tempo");
+      this.#tempoSelect = document.getElementById("tempo");
       this.#exercisesInput = document.getElementById("exercises");
-      this.#repetitionsInput = document.getElementById("repetitions");
-      this.#barsInput = document.getElementById("bars");
-      this.#beatsInput = document.getElementById("beats");
+      this.#repetitionsSelect = document.getElementById("repetitions");
+      this.#barsSelect = document.getElementById("bars");
+      this.#beatsSelect = document.getElementById("beats");
       this.#subdivisionsSelect = document.getElementById("subdivisions");
       this.#patternInput = document.getElementById("pattern");
-      this.#prerollBarsInput = document.getElementById("preroll-bars");
+      this.#prerollBarsSelect = document.getElementById("preroll-bars");
 
       this.#trackerId = 0;
       this.#audioCtx = new AudioContext();
@@ -526,23 +545,22 @@
       this.#progressBarDiv.innerHTML = IDLE_HTML;
       this.#dotsDiv.replaceChildren();
 
+      this.#populateSelect(document, this.#tempoSelect, 50, 250);
+      this.#populateSelect(document, this.#barsSelect, 1, 4);
+      this.#populateSelect(document, this.#beatsSelect, 1, 16);
+
       this.#startStopBtn.textContent = START_CAPTION;
-      this.#tempoInput.value = DEFAULT_TEMPO;
+      this.#tempoSelect.value = DEFAULT_TEMPO;
       this.#exercisesInput.value = DEFAULT_EXERCISES;
-      this.#repetitionsInput.value = DEFAULT_REPETITIONS;
-      this.#barsInput.value = DEFAULT_BARS;
-      this.#beatsInput.value = DEFAULT_BEATS;
+      this.#repetitionsSelect.value = DEFAULT_REPETITIONS;
+      this.#barsSelect.value = DEFAULT_BARS;
+      this.#beatsSelect.value = DEFAULT_BEATS;
       this.#subdivisionsSelect.value = DEFAULT_SUBDIVISIONS;
       this.#patternInput.value = makeDefaultPattern(DEFAULT_BEATS, DEFAULT_SUBDIVISIONS);
-      this.#prerollBarsInput.value = DEFAULT_PREROLL_BARS;
+      this.#prerollBarsSelect.value = DEFAULT_PREROLL_BARS;
 
       const inputs = [
-        this.#tempoInput,
         this.#exercisesInput,
-        this.#repetitionsInput,
-        this.#barsInput,
-        this.#beatsInput,
-        this.#prerollBarsInput
       ];
       for (const input of inputs) {
         input.addEventListener("keydown", e => {
@@ -552,7 +570,7 @@
         })
       }
 
-      this.#beatsInput.addEventListener("input", e => {
+      this.#beatsSelect.addEventListener("input", e => {
         if (!e.target.validity.valid) { return; }
         const beats = e.target.valueAsNumber;
         if (Number.isNaN(beats)) { return; }
@@ -569,8 +587,8 @@
         const subdivisions = parseInt(e.target.value);
         if (Number.isNaN(subdivisions)) { return; }
 
-        if (!this.#beatsInput.validity.valid) { return; }
-        const beats = this.#beatsInput.valueAsNumber;
+        if (!this.#beatsSelect.validity.valid) { return; }
+        const beats = this.#beatsSelect.valueAsNumber;
         if (Number.isNaN(beats)) { return; }
 
         this.#patternInput.value = makeDefaultPattern(beats, subdivisions);
@@ -594,20 +612,31 @@
       });
     }
 
+    #populateSelect(document, select, min, max) {
+      select.replaceChildren();
+      for (let i = min; i <= max; ++i) {
+        const e = document.createElement("option");
+        e.value = i;
+        e.innerHTML = i.toString();
+        select.appendChild(e);
+      }
+    }
+
+
     #startMetronome() {
       console.assert(!this.#tracker && !this.#beeper);
 
       this.#startStopBtn.textContent = STOP_CAPTION;
       this.#fields.disabled = true;
 
-      const tempo = this.#tempoInput.valueAsNumber;
+      const tempo = parseInt(this.#tempoSelect.value);
       const exercises = this.#exercisesInput.valueAsNumber;
-      const repetitions = this.#repetitionsInput.valueAsNumber;
-      const bars = this.#barsInput.valueAsNumber;
-      const beats = this.#beatsInput.valueAsNumber;
+      const repetitions = parseInt(this.#repetitionsSelect.value);
+      const bars = parseInt(this.#barsSelect.value);
+      const beats = parseInt(this.#beatsSelect.value);
       const subdivisions = parseInt(this.#subdivisionsSelect.value);
       const pattern = parsePattern(this.#patternInput.value, beats, subdivisions);
-      const prerollBars = this.#prerollBarsInput.valueAsNumber;
+      const prerollBars = parseInt(this.#prerollBarsSelect.value);
 
       this.#beeper = new Beeper({
         audioCtx: this.#audioCtx,
@@ -622,6 +651,7 @@
         id: ++this.#trackerId,
         audioCtx: this.#audioCtx,
         queue: this.#queue,
+        body: this.#body,
         progressExerciseDiv: this.#progressExerciseDiv,
         progressRepetitionDiv: this.#progressRepetitionDiv,
         progressBarDiv: this.#progressBarDiv,
@@ -670,10 +700,7 @@
 
       this.#queue.clear();
 
-      this.#progressExerciseDiv.classList.remove("last");
-      this.#progressRepetitionDiv.classList.remove("last");
-      this.#progressBarDiv.classList.remove("last");
-      this.#dotsDiv.classList.remove("last");
+      this.#body.classList.remove("last");
       this.#progressExerciseDiv.innerHTML = IDLE_HTML;
       this.#progressRepetitionDiv.innerHTML = IDLE_HTML;
       this.#progressBarDiv.innerHTML = IDLE_HTML;
