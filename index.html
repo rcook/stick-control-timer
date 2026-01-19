@@ -732,7 +732,14 @@
   (() => {
     function populatePresets(data) {
       if (Object.hasOwn(data, "presets")) {
+        const tempoSelect = document.getElementById("tempo");
+        const exercisesInput = document.getElementById("exercises");
         const repetitionsSelect = document.getElementById("repetitions");
+        const barsSelect = document.getElementById("bars");
+        const beatsSelect = document.getElementById("beats");
+        const subdivisionsSelect = document.getElementById("subdivisions");
+        const patternInput = document.getElementById("pattern");
+        const prerollBarsSelect = document.getElementById("preroll-bars");
         const presetContainerDiv = document.getElementById("preset-container");
         const presetSelect = document.getElementById("preset");
 
@@ -747,14 +754,35 @@
         presetSelect.selectedIndex = -1;
         presetSelect.addEventListener("change", e => {
           const preset = JSON.parse(e.target.options[e.target.selectedIndex].dataset.presetJson);
+          if (Object.hasOwn(preset, "tempo")) {
+            tempoSelect.value = preset.tempo;
+          }
+          if (Object.hasOwn(preset, "exercises")) {
+            exercisesInput.value = preset.exercises;
+          }
           if (Object.hasOwn(preset, "repetitions")) {
             repetitionsSelect.value = preset.repetitions;
+          }
+          if (Object.hasOwn(preset, "bars")) {
+            barsSelect.value = preset.bars;
+          }
+          if (Object.hasOwn(preset, "beats")) {
+            beatsSelect.value = preset.beats;
+          }
+          if (Object.hasOwn(preset, "subdivisions")) {
+            subdivisionsSelect.value = preset.subdivisions;
+          }
+          if (Object.hasOwn(preset, "pattern")) {
+            patternInput.value = preset.pattern;
+          }
+          if (Object.hasOwn(preset, "prerollBars")) {
+            prerollBarsSelect.value = preset.prerollBars;
           }
         })
       }
     }
 
-    fetch("datax.json").then(response => {
+    fetch("data.json").then(response => {
       if (response.ok) {
         return response.json();
       } else {
