@@ -115,27 +115,28 @@
       </div>
       <fieldset id="fields">
         <div>
-          <input id="tempo" type="number" min="30" max="250" step="1">
+          <input id="tempo" type="number" min="30" max="250" step="1" title="Tempo in quarter notes per minute">
           <label for="tempo">tempo</label>
         </div>
         <div>
-          <input id="exercises" type="number" min="1" max="100" step="1">
+          <input id="exercises" type="number" min="1" max="100" step="1" title="Number of exercises">
           <label for="exercises">exercises</label>
         </div>
         <div>
-          <input id="repetitions" type="number" min="1" max="100" step="1">
+          <input id="repetitions" type="number" min="1" max="100" step="1" title="Number of repetitions per exercise">
           <label for="repetitions">reps</label>
         </div>
         <div>
-          <input id="bars" type="number" min="1" max="4" step="1">
+          <input id="bars" type="number" min="1" max="4" step="1" title="Number of bars per repetition">
           <label for="bars">bars</label>
         </div>
         <div>
-          <input id="beats" type="number" min="1" max="16" step="1">
-          <label for="beats">beats</label>
+          <input id="beats" type="number" min="1" max="16" step="1"
+            title="Beats (with subdivisions determines number of steps in pattern)"">
+          <label for=" beats">beats</label>
         </div>
         <div>
-          <select id="subdivisions">
+          <select id="subdivisions" title="Subdivisions (with beats determines number of steps in pattern)">
             <option value="1">&#9833;</option>
             <option value="2">&#9834;</option>
             <option value="4">&#119137;</option>
@@ -143,11 +144,12 @@
           <label for="subdivisions">subs</label>
         </div>
         <div>
-          <input id="pattern" type="text">
+          <input id="pattern" type="text" title="Metronome pattern in REAPER-like format">
           <label for="pattern">pattern</label>
         </div>
         <div>
-          <input id="preroll-bars" type="number" min="1" max="100" step="1">
+          <input id="preroll-bars" type="number" min="1" max="100" step="1"
+            title="Sets number of preroll bars played before first exercise starts">
           <label for="preroll-bars">preroll</label>
         </div>
       </fieldset>
