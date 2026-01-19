@@ -2,9 +2,7 @@
   "presets": [
     {
       "name": "Feet",
-      "countdownDuration": 30,
-      "alertDuration": 5,
-      "pauseDuration": 5
+      "repetitions": 5
     }
   ]
 }

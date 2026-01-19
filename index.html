@@ -41,7 +41,7 @@
 
     .dots {
       display: flex;
-      min-width: 700px;
+      min-width: 900px;
       height: 200px;
     }
 
@@ -109,6 +109,10 @@
     #progress-bar {
       font-size: 2em;
     }
+
+    #preset-container {
+      display: none !important;
+    }
   </style>
 </head>
 
@@ -150,7 +154,7 @@
         </div>
         <div>
           <select id="beats" title="Beats (with subdivisions determines number of steps in pattern)"></select>
-          <label for=" beats">beats</label>
+          <label for="beats">beats</label>
         </div>
         <div>
           <select id="subdivisions" title="Subdivisions (with beats determines number of steps in pattern)">
@@ -172,6 +176,10 @@
             <option value="4">4</option>
           </select>
           <label for="preroll-bars">preroll</label>
+        </div>
+        <div id="preset-container">
+          <select id="preset" title="Presets"></select>
+          <label for="preset">presets</label>
         </div>
       </fieldset>
     </div>
@@ -204,6 +212,14 @@
   const DEFAULT_START_BAR = 0;
 
   const IDLE_HTML = "&ndash;&ndash;&ndash;";
+
+  function h(s) {
+    return new Option(s).innerHTML;
+  }
+
+  function attr(s) {
+    return new Option(s).innerHTML.replace("\"", "&quot;");
+  }
 
   function makeDefaultPattern(beats, subdivisions) {
     let pattern = "";
@@ -714,7 +730,37 @@
   }
 
   (() => {
-    new App(document);
+    function populatePresets(data) {
+      if (Object.hasOwn(data, "presets")) {
+        const repetitionsSelect = document.getElementById("repetitions");
+        const presetContainerDiv = document.getElementById("preset-container");
+        const presetSelect = document.getElementById("preset");
+
+        for (const preset of data.presets) {
+          const e = document.createElement("option");
+          e.innerHTML = h(preset.name);
+          e.dataset.presetJson = JSON.stringify(preset);
+          presetSelect.appendChild(e);
+        }
+
+        presetContainerDiv.style.setProperty("display", "inline-block", "important");
+        presetSelect.selectedIndex = -1;
+        presetSelect.addEventListener("change", e => {
+          const preset = JSON.parse(e.target.options[e.target.selectedIndex].dataset.presetJson);
+          if (Object.hasOwn(preset, "repetitions")) {
+            repetitionsSelect.value = preset.repetitions;
+          }
+        })
+      }
+    }
+
+    fetch("datax.json").then(response => {
+      if (response.ok) {
+        return response.json();
+      } else {
+        throw new Error(`Failed to retrieve data from ${response.url}`);
+      }
+    }).then(populatePresets).catch(console.error).then(() => new App(document));
   })();
   //]]>
 </script>
