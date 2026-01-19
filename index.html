@@ -645,7 +645,7 @@
 
       if (this.#startStopBtn.textContent == STOP_CAPTION &&
         this.#tracker.lastExercise &&
-        !confirm("Discard current progress? (OK to stop, Esc to restart with preroll)")) {
+        !confirm("Discard current progress? (OK to stop, Esc to restart current exercise with preroll)")) {
         const lastExercise = this.#tracker.lastExercise;
         this.#setMetronomeIdle();
         this.#startExercise = lastExercise;
