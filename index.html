@@ -157,6 +157,7 @@
 
 <script>
   //<![CDATA[
+  "use strict";
 
   const START_CAPTION = "Start";
   const STOP_CAPTION = "Stop";
@@ -171,8 +172,8 @@
   const BEEP_DURATION = 0.1;
 
   const DEFAULT_TEMPO = 120;
-  const DEFAULT_EXERCISES = 4;//24;
-  const DEFAULT_REPETITIONS = 1;//20;
+  const DEFAULT_EXERCISES = 24;
+  const DEFAULT_REPETITIONS = 20;
   const DEFAULT_BARS = 2;
   const DEFAULT_BEATS = 4;
   const DEFAULT_SUBDIVISIONS = 2;
@@ -215,16 +216,14 @@
       this.#notes = [];
     }
 
-    isEmpty() {
-      return this.#notes.length == 0;
-    }
+    get isEmpty() { return this.#notes.length == 0; }
 
     enqueue(note) {
       this.#notes.push(note);
     }
 
     dequeue() {
-      if (this.isEmpty()) {
+      if (this.isEmpty) {
         return null;
       }
 
@@ -232,7 +231,7 @@
     }
 
     peek() {
-      if (this.isEmpty()) {
+      if (this.isEmpty) {
         return null;
       }
       return this.#notes[0];
@@ -376,11 +375,6 @@
       this.#requestIds = [];
       this.#beats = null;
       this.#lastExercise = 0;
-
-      this.#progressExerciseDiv.innerHTML = IDLE_HTML;
-      this.#progressRepetitionDiv.innerHTML = IDLE_HTML;
-      this.#progressBarDiv.innerHTML = IDLE_HTML;
-      this.#dotsDiv.replaceChildren();
     }
 
     get lastExercise() { return this.#lastExercise; }
@@ -521,10 +515,15 @@
       this.#beeper = null;
       this.#tracker = null;
 
-      this.#init(document);
+      this.#initUi(document);
     }
 
-    #init(document) {
+    #initUi(document) {
+      this.#progressExerciseDiv.innerHTML = IDLE_HTML;
+      this.#progressRepetitionDiv.innerHTML = IDLE_HTML;
+      this.#progressBarDiv.innerHTML = IDLE_HTML;
+      this.#dotsDiv.replaceChildren();
+
       this.#startStopBtn.textContent = START_CAPTION;
       this.#tempoInput.value = DEFAULT_TEMPO;
       this.#exercisesInput.value = DEFAULT_EXERCISES;
