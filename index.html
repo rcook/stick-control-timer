@@ -817,69 +817,87 @@
   }
 
   (() => {
-    function populatePresets(data) {
-      if (Object.hasOwn(data, "presets")) {
-        const tempoSelect = document.getElementById("tempo");
-        const startExerciseInput = document.getElementById("start-exercise");
-        const exercisesInput = document.getElementById("exercises");
-        const repetitionsSelect = document.getElementById("repetitions");
-        const barsSelect = document.getElementById("bars");
-        const beatsSelect = document.getElementById("beats");
-        const subdivisionsSelect = document.getElementById("subdivisions");
-        const patternInput = document.getElementById("pattern");
-        const prerollBarsSelect = document.getElementById("preroll-bars");
-        const presetContainerDiv = document.getElementById("preset-container");
-        const presetSelect = document.getElementById("preset");
-
-        for (const preset of data.presets) {
-          const e = document.createElement("option");
-          e.innerHTML = h(preset.name);
-          e.dataset.presetJson = JSON.stringify(preset);
-          presetSelect.appendChild(e);
-        }
-
-        presetContainerDiv.style.setProperty("display", "inline-block", "important");
-        presetSelect.selectedIndex = -1;
-        presetSelect.addEventListener("change", e => {
-          const preset = JSON.parse(e.target.options[e.target.selectedIndex].dataset.presetJson);
-          if (Object.hasOwn(preset, "tempo")) {
-            tempoSelect.value = preset.tempo;
-          }
-          if (Object.hasOwn(preset, "startExercise")) {
-            startExerciseInput.value = preset.startExercise;
-          }
-          if (Object.hasOwn(preset, "exercises")) {
-            exercisesInput.value = preset.exercises;
-          }
-          if (Object.hasOwn(preset, "repetitions")) {
-            repetitionsSelect.value = preset.repetitions;
-          }
-          if (Object.hasOwn(preset, "bars")) {
-            barsSelect.value = preset.bars;
-          }
-          if (Object.hasOwn(preset, "beats")) {
-            beatsSelect.value = preset.beats;
-          }
-          if (Object.hasOwn(preset, "subdivisions")) {
-            subdivisionsSelect.value = preset.subdivisions;
-          }
-          if (Object.hasOwn(preset, "pattern")) {
-            patternInput.value = preset.pattern;
-          }
-          if (Object.hasOwn(preset, "prerollBars")) {
-            prerollBarsSelect.value = preset.prerollBars;
-          }
-        })
+    function installPresets(data) {
+      if (!localStorage.getItem("presets")) {
+        const presets = Object.hasOwn(data, "presets") ? data.presets : [];
+        const presetsJson = JSON.stringify(presets);
+        localStorage.setItem("presets", presetsJson);
       }
     }
 
-    fetch("data.json").then(response => {
-      if (response.ok) {
-        return response.json();
-      } else {
-        throw new Error(`Failed to retrieve data from ${response.url}`);
+    function runApp() {
+      populatePresetsUi(document);
+      new App(document);
+    }
+
+    function populatePresetsUi(document) {
+      const tempoSelect = document.getElementById("tempo");
+      const startExerciseInput = document.getElementById("start-exercise");
+      const exercisesInput = document.getElementById("exercises");
+      const repetitionsSelect = document.getElementById("repetitions");
+      const barsSelect = document.getElementById("bars");
+      const beatsSelect = document.getElementById("beats");
+      const subdivisionsSelect = document.getElementById("subdivisions");
+      const patternInput = document.getElementById("pattern");
+      const prerollBarsSelect = document.getElementById("preroll-bars");
+      const presetContainerDiv = document.getElementById("preset-container");
+      const presetSelect = document.getElementById("preset");
+
+      const presetsJson = localStorage.getItem("presets");
+      console.log(`presetsJson=${presetsJson}`);
+      const presets = JSON.parse(presetsJson);
+      for (const preset of presets) {
+        const e = document.createElement("option");
+        e.innerHTML = h(preset.name);
+        e.dataset.presetJson = JSON.stringify(preset);
+        presetSelect.appendChild(e);
       }
-    }).then(populatePresets).catch(console.error).then(() => new App(document));
+
+      presetContainerDiv.style.setProperty("display", "inline-block", "important");
+      presetSelect.selectedIndex = -1;
+      presetSelect.addEventListener("change", e => {
+        const preset = JSON.parse(e.target.options[e.target.selectedIndex].dataset.presetJson);
+        if (Object.hasOwn(preset, "tempo")) {
+          tempoSelect.value = preset.tempo;
+        }
+        if (Object.hasOwn(preset, "startExercise")) {
+          startExerciseInput.value = preset.startExercise;
+        }
+        if (Object.hasOwn(preset, "exercises")) {
+          exercisesInput.value = preset.exercises;
+        }
+        if (Object.hasOwn(preset, "repetitions")) {
+          repetitionsSelect.value = preset.repetitions;
+        }
+        if (Object.hasOwn(preset, "bars")) {
+          barsSelect.value = preset.bars;
+        }
+        if (Object.hasOwn(preset, "beats")) {
+          beatsSelect.value = preset.beats;
+        }
+        if (Object.hasOwn(preset, "subdivisions")) {
+          subdivisionsSelect.value = preset.subdivisions;
+        }
+        if (Object.hasOwn(preset, "pattern")) {
+          patternInput.value = preset.pattern;
+        }
+        if (Object.hasOwn(preset, "prerollBars")) {
+          prerollBarsSelect.value = preset.prerollBars;
+        }
+      })
+    }
+
+    if (localStorage.getItem("presets")) {
+      runApp();
+    } else {
+      fetch("data.json").then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error(`Failed to retrieve data from ${response.url}`);
+        }
+      }).then(installPresets).catch(console.error).then(runApp);
+    }
   })();
   //]]>
 </script>
