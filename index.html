@@ -134,6 +134,10 @@
           <label for="tempo">tempo</label>
         </div>
         <div>
+          <input id="start-exercise" type="number" min="1" max="100" step="1" title="Start exercise">
+          <label for="start-exercise">start</label>
+        </div>
+        <div>
           <input id="exercises" type="number" min="1" max="100" step="1" title="Number of exercises">
           <label for="exercises">exercises</label>
         </div>
@@ -203,6 +207,7 @@
   const BEEP_DURATION = 0.1;
 
   const DEFAULT_TEMPO = 120;
+  const DEFAULT_START_EXERCISE = 1;
   const DEFAULT_EXERCISES = 24;
   const DEFAULT_REPETITIONS = 20;
   const DEFAULT_BARS = 2;
@@ -246,8 +251,12 @@
     return s.substring(0, len).padEnd(len, "D");
   }
 
-  function formatProgress(name, value, count, getReady = false) {
-    return getReady ? `${name} ${value + 1} of ${count} (get ready!)` : `${name} ${value + 1} of ${count}`;
+  function formatProgress(name, value, count, offset = null, getReady = false) {
+    let s = offset === null ? `${name} ${value + 1} of ${count}` : `${name} ${value + offset + 1} (${value + 1} of ${count})`;
+    if (getReady) {
+      s += " (get ready!)";
+    }
+    return s;
   }
 
   class DecayingSawtoothClick {
@@ -469,6 +478,7 @@
     #progressRepetitionDiv
     #progressBarDiv
     #dotsDiv
+    #exerciseOffset
     #exercises
     #repetitions
     #bars
@@ -488,6 +498,7 @@
       this.#progressRepetitionDiv = options.progressRepetitionDiv;
       this.#progressBarDiv = options.progressBarDiv;
       this.#dotsDiv = options.dotsDiv;
+      this.#exerciseOffset = options.exerciseOffset;
       this.#exercises = options.exercises;
       this.#repetitions = options.repetitions;
       this.#bars = options.bars;
@@ -547,16 +558,16 @@
       let isLastBarOfRepetition;
       if (note.currentBar < this.#prerollBars) {
         isLastBarOfRepetition = note.currentBar == this.#prerollBars - 1;
-        this.#progressExerciseDiv.innerHTML = `preroll &rarr; exercise ${this.#startExercise + 1}`;
+        this.#progressExerciseDiv.innerHTML = `preroll &rarr; exercise ${this.#startExercise + this.#exerciseOffset + 1}`;
         this.#progressRepetitionDiv.innerHTML = IDLE_HTML;
-        this.#progressBarDiv.innerHTML = formatProgress("bar", note.currentBar, this.#prerollBars, isLastBarOfRepetition);
+        this.#progressBarDiv.innerHTML = formatProgress("bar", note.currentBar, this.#prerollBars, null, isLastBarOfRepetition);
       } else {
         const [exercise, repetition, bar] = this.#position(note.currentBar - this.#prerollBars);
         isLastBarOfRepetition = repetition == this.#repetitions - 1 && bar == this.#bars - 1;
         const isFinished = exercise >= this.#exercises;
-        this.#progressExerciseDiv.innerHTML = formatProgress("exercise", exercise, this.#exercises);
+        this.#progressExerciseDiv.innerHTML = formatProgress("exercise", exercise, this.#exercises, this.#exerciseOffset);
         this.#progressRepetitionDiv.innerHTML = formatProgress("rep", repetition, this.#repetitions);
-        this.#progressBarDiv.innerHTML = formatProgress("bar", bar, this.#bars, isLastBarOfRepetition);
+        this.#progressBarDiv.innerHTML = formatProgress("bar", bar, this.#bars, null, isLastBarOfRepetition);
         this.#lastExercise = exercise;
         if (isFinished) {
           this.#onFinished();
@@ -592,6 +603,7 @@
     #startStopBtn
     #fields
     #tempoSelect
+    #startExerciseInput
     #exercisesInput
     #repetitionsSelect
     #barsSelect
@@ -615,6 +627,7 @@
       this.#startStopBtn = document.getElementById("start-stop");
       this.#fields = document.getElementById("fields");
       this.#tempoSelect = document.getElementById("tempo");
+      this.#startExerciseInput = document.getElementById("start-exercise");
       this.#exercisesInput = document.getElementById("exercises");
       this.#repetitionsSelect = document.getElementById("repetitions");
       this.#barsSelect = document.getElementById("bars");
@@ -637,6 +650,7 @@
 
       this.#startStopBtn.textContent = START_CAPTION;
       this.#tempoSelect.value = DEFAULT_TEMPO;
+      this.#startExerciseInput.value = DEFAULT_START_EXERCISE;
       this.#exercisesInput.value = DEFAULT_EXERCISES;
       this.#repetitionsSelect.value = DEFAULT_REPETITIONS;
       this.#barsSelect.value = DEFAULT_BARS;
@@ -716,6 +730,7 @@
       this.#fields.disabled = true;
 
       const tempo = parseInt(this.#tempoSelect.value);
+      const exerciseOffset = this.#startExerciseInput.valueAsNumber - 1;
       const exercises = this.#exercisesInput.valueAsNumber;
       const repetitions = parseInt(this.#repetitionsSelect.value);
       const bars = parseInt(this.#barsSelect.value);
@@ -743,6 +758,7 @@
         progressRepetitionDiv: this.#progressRepetitionDiv,
         progressBarDiv: this.#progressBarDiv,
         dotsDiv: this.#dotsDiv,
+        exerciseOffset: exerciseOffset,
         exercises: exercises,
         repetitions: repetitions,
         bars: bars,
@@ -804,6 +820,7 @@
     function populatePresets(data) {
       if (Object.hasOwn(data, "presets")) {
         const tempoSelect = document.getElementById("tempo");
+        const startExerciseInput = document.getElementById("start-exercise");
         const exercisesInput = document.getElementById("exercises");
         const repetitionsSelect = document.getElementById("repetitions");
         const barsSelect = document.getElementById("bars");
@@ -827,6 +844,9 @@
           const preset = JSON.parse(e.target.options[e.target.selectedIndex].dataset.presetJson);
           if (Object.hasOwn(preset, "tempo")) {
             tempoSelect.value = preset.tempo;
+          }
+          if (Object.hasOwn(preset, "startExercise")) {
+            startExerciseInput.value = preset.startExercise;
           }
           if (Object.hasOwn(preset, "exercises")) {
             exercisesInput.value = preset.exercises;
