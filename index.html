@@ -194,6 +194,10 @@
   //<![CDATA[
   "use strict";
 
+  const SAVE_ID = -1;
+  const REMOVE_ID = -2;
+  const CLEAR_ID = -3;
+
   const START_CAPTION = "Start";
   const STOP_CAPTION = "Stop";
 
@@ -831,6 +835,16 @@
     }
 
     function populatePresetsUi(document) {
+      function specialOption(innerHtml, value = null, disabled = false) {
+        const e = document.createElement("option");
+        e.innerHTML = innerHtml;
+        if (value) {
+          e.value = value;
+        }
+        e.disabled = disabled;
+        presetSelect.appendChild(e);
+      }
+
       const tempoSelect = document.getElementById("tempo");
       const startExerciseInput = document.getElementById("start-exercise");
       const exercisesInput = document.getElementById("exercises");
@@ -844,19 +858,34 @@
       const presetSelect = document.getElementById("preset");
 
       const presetsJson = localStorage.getItem("presets");
-      console.log(`presetsJson=${presetsJson}`);
       const presets = JSON.parse(presetsJson);
       for (const preset of presets) {
         const e = document.createElement("option");
         e.innerHTML = h(preset.name);
+        e.value = "";
         e.dataset.presetJson = JSON.stringify(preset);
         presetSelect.appendChild(e);
       }
 
+      specialOption("__________", null, true);
+      specialOption("Save...", SAVE_ID);
+      specialOption("Remove...", REMOVE_ID);
+      specialOption("Clear...", CLEAR_ID);
+
       presetContainerDiv.style.setProperty("display", "inline-block", "important");
       presetSelect.selectedIndex = -1;
       presetSelect.addEventListener("change", e => {
-        const preset = JSON.parse(e.target.options[e.target.selectedIndex].dataset.presetJson);
+        if (e.target.value.length > 0) {
+          switch (parseInt(e.target.value)) {
+            case SAVE_ID: alert("TODO: Save"); break;
+            case REMOVE_ID: alert("TODO: Remove"); break;
+            case CLEAR_ID: alert("TODO: Clear"); break;
+          }
+          return;
+        }
+
+        const selectedOption = e.target.options[e.target.selectedIndex];
+        const preset = JSON.parse(selectedOption.dataset.presetJson);
         if (Object.hasOwn(preset, "tempo")) {
           tempoSelect.value = preset.tempo;
         }
