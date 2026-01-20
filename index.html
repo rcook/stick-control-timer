@@ -252,19 +252,21 @@
 
   class DecayingSawtoothClick {
     #frequency
+    #volume
 
-    static Builder(frequency) {
+    static Builder(frequency, volume) {
       return new class {
         constructor() { }
 
         build(audioCtx) {
-          return new DecayingSawtoothClick(frequency);
+          return new DecayingSawtoothClick(frequency, volume);
         }
       }
     }
 
-    constructor(frequency) {
+    constructor(frequency, volume) {
       this.#frequency = frequency;
+      this.#volume = volume;
     }
 
     generate(audioCtx, startTime) {
@@ -277,8 +279,8 @@
       oscillator.stop(endTime + OSCILLATOR_PADDING);
 
       const gain = audioCtx.createGain();
-      gain.gain.setValueAtTime(1.0, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.1, endTime);
+      gain.gain.setValueAtTime(this.#volume, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, endTime);
 
       oscillator.connect(gain).connect(audioCtx.destination);
     }
@@ -339,10 +341,13 @@
     }
   }
 
+  const PARAMS = new URLSearchParams(window.location.search);
+  const SILENT = PARAMS.get("silent") == "1";
+  const VOLUME = SILENT ? 0.0 : 1.0;
   const CLICKS = {
-    [Accent.HIGH]: DecayingSawtoothClick.Builder(880),
-    [Accent.MEDIUM]: DecayingSawtoothClick.Builder(440),
-    [Accent.LOW]: DecayingSawtoothClick.Builder(220),
+    [Accent.HIGH]: DecayingSawtoothClick.Builder(880, VOLUME),
+    [Accent.MEDIUM]: DecayingSawtoothClick.Builder(440, VOLUME),
+    [Accent.LOW]: DecayingSawtoothClick.Builder(220, VOLUME),
     [Accent.SILENT]: null
   };
 
