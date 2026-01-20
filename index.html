@@ -199,6 +199,7 @@
   const CLEAR_ID = -3;
   const IMPORT_ID = -4;
   const EXPORT_ID = -5;
+  const RESET_ID = -6;
 
   const START_CAPTION = "Start";
   const STOP_CAPTION = "Stop";
@@ -823,6 +824,17 @@
   }
 
   (() => {
+    function fetchPresets() {
+      return fetch("data.json").then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error(`Failed to retrieve data from ${response.url}`);
+        }
+      }).then(data => writePresets(Object.hasOwn(data, "presets") ? data.presets : []))
+        .catch(console.error);
+    }
+
     function readPresets() {
       const json = localStorage.getItem("presets");
       return json === null ? null : JSON.parse(json).toSorted((a, b) => a.name.localeCompare(b.name));
@@ -831,12 +843,6 @@
     function writePresets(presets) {
       const json = JSON.stringify(presets.toSorted((a, b) => a.name.localeCompare(b.name)));
       localStorage.setItem("presets", json);
-    }
-
-    function installPresets(data) {
-      if (readPresets() === null) {
-        writePresets(Object.hasOwn(data, "presets") ? data.presets : []);
-      }
     }
 
     function runApp() {
@@ -913,6 +919,9 @@
               navigator.clipboard.writeText(encoded).then(() => alert("Preset state written to clipboard!"));
               break;
             }
+            case RESET_ID: {
+              fetchPresets().then(() => populatePresetsUi(presetContainerDiv, presetSelect));
+            }
           }
           return;
         }
@@ -976,19 +985,14 @@
       specialOption("Clear presets", CLEAR_ID);
       specialOption("Import presets...", IMPORT_ID);
       specialOption("Export presets...", EXPORT_ID);
+      specialOption("Reset presets to defaults", RESET_ID);
 
       presetContainerDiv.style.setProperty("display", "inline-block", "important");
       presetSelect.selectedIndex = -1;
     }
 
     if (readPresets() === null) {
-      fetch("data.json").then(response => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw new Error(`Failed to retrieve data from ${response.url}`);
-        }
-      }).then(installPresets).catch(console.error).then(runApp);
+      fetchPresets().then(runApp);
     } else {
       runApp();
     }
