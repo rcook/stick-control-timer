@@ -897,7 +897,9 @@
 
       this.#presetSelect.addEventListener("change", e => {
         if (e.target.value.length > 0) {
-          switch (parseInt(e.target.value)) {
+          const command = parseInt(e.target.value);
+          e.target.selectedIndex = -1;
+          switch (command) {
             case SAVE_ID: {
               const name = prompt("Enter preset name");
               if (name !== null) {
