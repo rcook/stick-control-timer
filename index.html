@@ -624,6 +624,8 @@
     #startExercise = 0;
     #beeper = null;
     #tracker = null;
+    #elements
+    #defaultElementValues
 
     constructor(document) {
       this.#body = document.body;
@@ -642,7 +644,37 @@
       this.#subdivisionsSelect = document.getElementById("subdivisions");
       this.#patternInput = document.getElementById("pattern");
       this.#prerollBarsSelect = document.getElementById("preroll-bars");
+      this.#elements = [
+        this.#tempoSelect,
+        this.#startExerciseInput,
+        this.#exercisesInput,
+        this.#repetitionsSelect,
+        this.#barsSelect,
+        this.#beatsSelect,
+        this.#subdivisionsSelect,
+        this.#patternInput,
+        this.#prerollBarsSelect
+      ].toSorted((a, b) => a.id.localeCompare(b.id));
+      this.#defaultElementValues = {
+        [this.#tempoSelect.id]: DEFAULT_TEMPO,
+        [this.#startExerciseInput.id]: DEFAULT_START_EXERCISE,
+        [this.#exercisesInput.id]: DEFAULT_EXERCISES,
+        [this.#repetitionsSelect.id]: DEFAULT_REPETITIONS,
+        [this.#barsSelect.id]: DEFAULT_BARS,
+        [this.#beatsSelect.id]: DEFAULT_BEATS,
+        [this.#subdivisionsSelect.id]: DEFAULT_SUBDIVISIONS,
+        [this.#patternInput.id]: makeDefaultPattern(DEFAULT_BEATS, DEFAULT_SUBDIVISIONS),
+        [this.#prerollBarsSelect.id]: DEFAULT_PREROLL_BARS
+      };
       this.#initUi(document);
+    }
+
+    pushState() {
+      const url = new URL(window.location);
+      for (const e of this.#elements) {
+        url.searchParams.set(e.id, e.value);
+      }
+      window.history.replaceState({}, "", url);
     }
 
     #initUi(document) {
@@ -656,15 +688,12 @@
       this.#populateSelect(document, this.#beatsSelect, 1, 16);
 
       this.#startStopBtn.textContent = START_CAPTION;
-      this.#tempoSelect.value = DEFAULT_TEMPO;
-      this.#startExerciseInput.value = DEFAULT_START_EXERCISE;
-      this.#exercisesInput.value = DEFAULT_EXERCISES;
-      this.#repetitionsSelect.value = DEFAULT_REPETITIONS;
-      this.#barsSelect.value = DEFAULT_BARS;
-      this.#beatsSelect.value = DEFAULT_BEATS;
-      this.#subdivisionsSelect.value = DEFAULT_SUBDIVISIONS;
-      this.#patternInput.value = makeDefaultPattern(DEFAULT_BEATS, DEFAULT_SUBDIVISIONS);
-      this.#prerollBarsSelect.value = DEFAULT_PREROLL_BARS;
+
+      const params = new URLSearchParams(window.location.search);
+      for (const e of this.#elements) {
+        const value = params.get(e.id);
+        e.value = value === null ? this.#defaultElementValues[e.id] : value;
+      }
 
       const inputs = [
         this.#startExerciseInput,
@@ -676,6 +705,10 @@
             e.preventDefault();
           }
         })
+      }
+
+      for (const e of this.#elements) {
+        e.addEventListener("input", e => this.pushState());
       }
 
       this.#beatsSelect.addEventListener("input", e => {
@@ -729,7 +762,6 @@
         select.appendChild(e);
       }
     }
-
 
     #startMetronome() {
       console.assert(!this.#tracker && !this.#beeper);
@@ -847,11 +879,11 @@
     }
 
     function runApp() {
-      initializePresetsUi(document);
-      new App(document);
+      const app = new App(document);
+      initializePresetsUi(app, document);
     }
 
-    function initializePresetsUi(document) {
+    function initializePresetsUi(app, document) {
       const tempoSelect = document.getElementById("tempo");
       const startExerciseInput = document.getElementById("start-exercise");
       const exercisesInput = document.getElementById("exercises");
@@ -956,6 +988,8 @@
         if (Object.hasOwn(preset, "prerollBars")) {
           prerollBarsSelect.value = preset.prerollBars;
         }
+
+        app.pushState();
       })
     }
 
