@@ -627,7 +627,7 @@
     #beeper = null;
     #tracker = null;
     #paramElements
-    #defaultParamElementValues
+    #paramMetadata
 
     constructor(document) {
       this.#body = document.body;
@@ -660,16 +660,16 @@
         this.#patternInput,
         this.#prerollBarsSelect
       ].toSorted((a, b) => a.id.localeCompare(b.id));
-      this.#defaultParamElementValues = {
-        [this.#tempoSelect.id]: DEFAULT_TEMPO,
-        [this.#startExerciseInput.id]: DEFAULT_START_EXERCISE,
-        [this.#exercisesInput.id]: DEFAULT_EXERCISES,
-        [this.#repetitionsSelect.id]: DEFAULT_REPETITIONS,
-        [this.#barsSelect.id]: DEFAULT_BARS,
-        [this.#beatsSelect.id]: DEFAULT_BEATS,
-        [this.#subdivisionsSelect.id]: DEFAULT_SUBDIVISIONS,
-        [this.#patternInput.id]: makeDefaultPattern(DEFAULT_BEATS, DEFAULT_SUBDIVISIONS),
-        [this.#prerollBarsSelect.id]: DEFAULT_PREROLL_BARS
+      this.#paramMetadata = {
+        [this.#tempoSelect.id]: { name: "tempo", default: DEFAULT_TEMPO },
+        [this.#startExerciseInput.id]: { name: "startExercise", default: DEFAULT_START_EXERCISE },
+        [this.#exercisesInput.id]: { name: "exercises", default: DEFAULT_EXERCISES },
+        [this.#repetitionsSelect.id]: { name: "repetitions", default: DEFAULT_REPETITIONS },
+        [this.#barsSelect.id]: { name: "bars", default: DEFAULT_BARS },
+        [this.#beatsSelect.id]: { name: "beats", default: DEFAULT_BEATS },
+        [this.#subdivisionsSelect.id]: { name: "subdivisions", default: DEFAULT_SUBDIVISIONS },
+        [this.#patternInput.id]: { name: "pattern", default: makeDefaultPattern(DEFAULT_BEATS, DEFAULT_SUBDIVISIONS) },
+        [this.#prerollBarsSelect.id]: { name: "prerollBars", default: DEFAULT_PREROLL_BARS }
       };
 
       this.#initUi(document);
@@ -698,8 +698,17 @@
     }
 
     #writePresets(presets) {
-      const json = JSON.stringify(presets.toSorted((a, b) => a.name.localeCompare(b.name)));
+      const sortedPresets = presets.toSorted((a, b) => a.name.localeCompare(b.name));
+      const json = JSON.stringify(sortedPresets);
       localStorage.setItem("presets", json);
+      return sortedPresets;
+    }
+
+    #addOrOverwritePreset(preset) {
+      const presets = this.#readPresets().filter(p => p.name.localeCompare(preset.name));
+      presets.push(preset);
+      const newPresets = this.#writePresets(presets);
+      return newPresets.findIndex(p => !p.name.localeCompare(preset.name));
     }
 
     #initUi(document) {
@@ -717,7 +726,7 @@
       const params = new URLSearchParams(window.location.search);
       for (const e of this.#paramElements) {
         const value = params.get(e.id);
-        e.value = value === null ? this.#defaultParamElementValues[e.id] : value;
+        e.value = value === null ? this.#paramMetadata[e.id].default : value;
       }
 
       const inputs = [
@@ -733,7 +742,10 @@
       }
 
       for (const e of this.#paramElements) {
-        e.addEventListener("input", e => this.#pushState());
+        e.addEventListener("input", e => {
+          this.#presetSelect.selectedIndex = -1;
+          this.#pushState();
+        });
       }
 
       this.#beatsSelect.addEventListener("input", e => {
@@ -787,8 +799,7 @@
             case SAVE_ID: {
               const name = prompt("Enter preset name");
               if (name !== null) {
-                const presets = this.#readPresets().filter(p => p.name.localeCompare(name));
-                presets.push({
+                const idx = this.#addOrOverwritePreset({
                   name: name,
                   tempo: parseInt(this.#tempoSelect.value),
                   startExercise: this.#startExerciseInput.valueAsNumber,
@@ -800,8 +811,9 @@
                   pattern: this.#patternInput.value,
                   prerollBars: parseInt(this.#prerollBarsSelect.value)
                 });
-                this.#writePresets(presets);
+                console.log(idx);
                 this.#populatePresetsUi();
+                this.#presetSelect.selectedIndex = idx;
               }
               break;
             }
@@ -844,34 +856,12 @@
 
         const selectedOption = e.target.options[e.target.selectedIndex];
         const preset = JSON.parse(selectedOption.dataset.presetJson);
-        if (Object.hasOwn(preset, "tempo")) {
-          this.#tempoSelect.value = preset.tempo;
+        for (const e of this.#paramElements) {
+          const m = this.#paramMetadata[e.id];
+          if (Object.hasOwn(preset, m.name)) {
+            e.value = preset[m.name];
+          }
         }
-        if (Object.hasOwn(preset, "startExercise")) {
-          this.#startExerciseInput.value = preset.startExercise;
-        }
-        if (Object.hasOwn(preset, "exercises")) {
-          this.#exercisesInput.value = preset.exercises;
-        }
-        if (Object.hasOwn(preset, "repetitions")) {
-          this.#repetitionsSelect.value = preset.repetitions;
-        }
-        if (Object.hasOwn(preset, "bars")) {
-          this.#barsSelect.value = preset.bars;
-        }
-        if (Object.hasOwn(preset, "beats")) {
-          this.#beatsSelect.value = preset.beats;
-        }
-        if (Object.hasOwn(preset, "subdivisions")) {
-          this.#subdivisionsSelect.value = preset.subdivisions;
-        }
-        if (Object.hasOwn(preset, "pattern")) {
-          this.#patternInput.value = preset.pattern;
-        }
-        if (Object.hasOwn(preset, "prerollBars")) {
-          this.#prerollBarsSelect.value = preset.prerollBars;
-        }
-
         this.#pushState();
       })
     }
