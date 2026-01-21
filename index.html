@@ -211,7 +211,7 @@
     SILENT: "D"
   });
 
-  const BEEP_DURATION = 0.1;
+  const BEEP_DURATION = 0.05;
 
   const DEFAULT_TEMPO = 120;
   const DEFAULT_START_EXERCISE = 1;
@@ -296,7 +296,7 @@
 
       const gain = audioCtx.createGain();
       gain.gain.setValueAtTime(this.#volume, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, endTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
 
       oscillator.connect(gain).connect(audioCtx.destination);
     }
@@ -361,9 +361,9 @@
   const SILENT = PARAMS.get("silent") == "1";
   const VOLUME = SILENT ? 0.0 : 1.0;
   const CLICKS = {
-    [Accent.HIGH]: DecayingSawtoothClick.Builder(880, VOLUME),
-    [Accent.MEDIUM]: DecayingSawtoothClick.Builder(440, VOLUME),
-    [Accent.LOW]: DecayingSawtoothClick.Builder(220, VOLUME),
+    [Accent.HIGH]: DecayingSawtoothClick.Builder(1760, VOLUME),
+    [Accent.MEDIUM]: DecayingSawtoothClick.Builder(880, VOLUME),
+    [Accent.LOW]: DecayingSawtoothClick.Builder(440, VOLUME),
     [Accent.SILENT]: null
   };
 
