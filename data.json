@@ -11,14 +11,6 @@
       "subdivisions": 2,
       "pattern": "ACBCBCBC",
       "prerollBars": 2
-    },
-    {
-      "name": "Feet",
-      "repetitions": 5
-    },
-    {
-      "name": "Slow",
-      "tempo": 50
     }
   ]
 }
