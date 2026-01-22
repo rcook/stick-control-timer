@@ -989,15 +989,19 @@
 
       this.#presetSelect.replaceChildren();
 
-      for (const preset of this.#readPresets()) {
-        const e = document.createElement("option");
-        e.innerHTML = h(preset.name);
-        e.value = "";
-        e.dataset.presetJson = JSON.stringify(preset);
-        this.#presetSelect.appendChild(e);
+      const presets = this.#readPresets();
+      if (presets.length > 0) {
+        for (const preset of this.#readPresets()) {
+          const e = document.createElement("option");
+          e.innerHTML = h(preset.name);
+          e.value = "";
+          e.dataset.presetJson = JSON.stringify(preset);
+          this.#presetSelect.appendChild(e);
+        }
+
+        addCommandOption(this.#presetSelect, "__________", null, true);
       }
 
-      addCommandOption(this.#presetSelect, "__________", null, true);
       addCommandOption(this.#presetSelect, "Save current parameters as preset...", SAVE_ID);
       addCommandOption(this.#presetSelect, "Remove preset...", REMOVE_ID);
       addCommandOption(this.#presetSelect, "Clear all presets", CLEAR_ID);
