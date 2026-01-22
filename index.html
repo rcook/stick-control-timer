@@ -299,9 +299,8 @@
   const SAVE_ID = -1;
   const REMOVE_ID = -2;
   const CLEAR_ID = -3;
-  const IMPORT_ID = -4;
-  const EXPORT_ID = -5;
-  const RESET_ID = -6;
+  const EXPORT_ID = -4;
+  const RESET_ID = -5;
 
   const START_CAPTION = "Start";
   const STOP_CAPTION = "Stop";
@@ -328,6 +327,9 @@
   const IDLE_HTML = "&ndash;&ndash;&ndash;";
 
   const OSCILLATOR_PADDING = 0.01;
+
+  const SILENT_PARAM = "silent";
+  const IMPORT_PRESETS_PARAM = "import-presets";
 
   function h(s) {
     return new Option(s).innerHTML;
@@ -458,16 +460,6 @@
       return buffer
     }
   }
-
-  const PARAMS = new URLSearchParams(window.location.search);
-  const SILENT = PARAMS.get("silent") == "1";
-  const VOLUME = SILENT ? 0.0 : 1.0;
-  const CLICKS = {
-    [Accent.HIGH]: DecayingSawtoothClick.Builder(1760, VOLUME),
-    [Accent.MEDIUM]: DecayingSawtoothClick.Builder(880, VOLUME),
-    [Accent.LOW]: DecayingSawtoothClick.Builder(440, VOLUME),
-    [Accent.SILENT]: null
-  };
 
   class Queue {
     #notes = [];
@@ -730,8 +722,13 @@
     #tracker = null;
     #paramElements
     #paramMetadata
+    #clicks
 
-    constructor(document) {
+    constructor(document, window) {
+      const params = new URLSearchParams(window.location.search);
+      const silent = params.get(SILENT_PARAM) == "1";
+      const importPresets = params.get(IMPORT_PRESETS_PARAM);
+
       this.#body = document.body;
       this.#progressExerciseDiv = document.getElementById("progress-exercise");
       this.#progressRepetitionDiv = document.getElementById("progress-repetition");
@@ -774,7 +771,24 @@
         [this.#prerollBarsSelect.id]: { name: "prerollBars", default: DEFAULT_PREROLL_BARS }
       };
 
+      const volume = silent ? 0.0 : 1.0;
+      this.#clicks = {
+        [Accent.HIGH]: DecayingSawtoothClick.Builder(1760, volume),
+        [Accent.MEDIUM]: DecayingSawtoothClick.Builder(880, volume),
+        [Accent.LOW]: DecayingSawtoothClick.Builder(440, volume),
+        [Accent.SILENT]: null
+      };
+
       this.#initUi(document);
+
+      if (importPresets !== null) {
+        const s = atob(importPresets);
+        const presets = JSON.parse(s);
+        if (confirm(`Import ${presets.length} presets from URL?`)) {
+          this.#writePresets(presets);
+        }
+        this.#pushState();
+      }
 
       if (this.#readPresets() === null) {
         this.#fetchPresets().then(() => this.#initPresetsUi());
@@ -934,21 +948,13 @@
               this.#populatePresetsUi();
               break;
             }
-            case IMPORT_ID: {
-              const encoded = prompt("Enter preset state");
-              if (encoded !== null) {
-                const s = atob(encoded);
-                const presets = JSON.parse(s);
-                this.#writePresets(presets);
-                this.#populatePresetsUi();
-              }
-              break;
-            }
             case EXPORT_ID: {
-              const presets = this.#readPresets();
-              const s = JSON.stringify(presets);
+              const s = JSON.stringify(this.#readPresets());
               const encoded = btoa(s);
-              navigator.clipboard.writeText(encoded).then(() => alert("Preset state written to clipboard!"));
+              const url = new URL(window.location.href);
+              url.searchParams.forEach((v, k) => url.searchParams.delete(k));
+              url.searchParams.set(IMPORT_PRESETS_PARAM, encoded);
+              prompt("Copy this link and paste into a different browser to import your presets", url.toString());
               break;
             }
             case RESET_ID: {
@@ -994,8 +1000,7 @@
       addCommandOption(this.#presetSelect, "__________", null, true);
       addCommandOption(this.#presetSelect, "Save current parameters as preset...", SAVE_ID);
       addCommandOption(this.#presetSelect, "Remove preset...", REMOVE_ID);
-      addCommandOption(this.#presetSelect, "Clear presets", CLEAR_ID);
-      addCommandOption(this.#presetSelect, "Import presets...", IMPORT_ID);
+      addCommandOption(this.#presetSelect, "Clear all presets", CLEAR_ID);
       addCommandOption(this.#presetSelect, "Export presets...", EXPORT_ID);
       addCommandOption(this.#presetSelect, "Reset presets to defaults", RESET_ID);
 
@@ -1004,10 +1009,12 @@
     }
 
     #pushState() {
-      const url = new URL(window.location);
+      const url = new URL(window.location.href);
+      url.searchParams.forEach((v, k) => url.searchParams.delete(k));
       for (const e of this.#paramElements) {
         url.searchParams.set(e.id, e.value);
       }
+      console.log(`pushState: ${url}`);
       window.history.replaceState({}, "", url);
     }
 
@@ -1044,7 +1051,7 @@
         subdivisions: subdivisions,
         pattern: pattern,
         queue: this.#queue,
-        clicks: CLICKS
+        clicks: this.#clicks
       });
 
       this.#tracker = new Tracker({
@@ -1114,7 +1121,7 @@
     }
   }
 
-  (() => new App(document))();
+  (() => new App(document, window))();
   //]]>
 </script>
 
