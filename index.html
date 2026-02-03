@@ -827,7 +827,7 @@
 
     #fetchPresets() {
       return fetch(DATA_FILE_NAME, { cache: "no-store" }).then(response => {
-        if (response.ok && false) {
+        if (response.ok) {
           return response.json();
         } else {
           console.error(`Fetch from ${response.url} failed with HTTP status ${response.status}`);
