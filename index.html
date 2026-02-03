@@ -354,6 +354,9 @@
   const SUBDIVISIONS_OPTIONS = [1, 2, 4];
   const PREROLL_BARS_OPTIONS = [1, 2, 3, 4];
 
+  const MAX_IMPORT_PRESETS_LENGTH = 1000;
+  const MAX_IMPORT_JSON_BYTES = 100000;
+
   function parseNumber(s, min, max, defaultValue) {
     if (s === null) { return defaultValue; }
     const value = parseInt(s, 10);
@@ -819,12 +822,29 @@
       this.#initUi(document);
 
       if (importPresets !== null) {
-        const s = atob(importPresets);
-        const presets = JSON.parse(s);
-        if (confirm(`Import ${presets.length} presets from URL?`)) {
-          this.#writePresets(presets);
+        try {
+          if (importPresets.length > MAX_IMPORT_JSON_BYTES) {
+            throw new Error("Import data too large");
+          }
+
+          const s = atob(importPresets);
+          const obj = JSON.parse(s);
+          if (!Array.isArray(obj)) {
+            throw new Error("Invalid import format");
+          }
+          if (obj.length > MAX_IMPORT_PRESETS_LENGTH) {
+            throw new Error("Too many presets");
+          }
+
+          const presets = obj.filter(p => p && typeof p.name === "string");
+          if (confirm(`Import ${presets.length} presets from URL?`)) {
+            this.#writePresets(presets);
+          }
+
+          this.#pushState();
+        } catch (e) {
+          this.#showFetchError(e);
         }
-        this.#pushState();
       }
 
       if (this.#readPresets() === null) {
