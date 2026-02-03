@@ -353,7 +353,7 @@
   function makeDefaultPattern(beats, subdivisions) {
     let pattern = "";
     for (let i = 0; i < beats; ++i) {
-      if (i == 0) {
+      if (i === 0) {
         pattern += Accent.HIGH;
       } else {
         pattern += Accent.MEDIUM;
@@ -364,7 +364,7 @@
       }
     }
 
-    console.assert(pattern.length == beats * subdivisions);
+    console.assert(pattern.length === beats * subdivisions);
     return pattern;
   }
 
@@ -477,7 +477,7 @@
 
     constructor() { }
 
-    get isEmpty() { return this.#notes.length == 0; }
+    get isEmpty() { return this.#notes.length === 0; }
 
     enqueue(note) {
       this.#notes.push(note);
@@ -557,14 +557,14 @@
         this.#scheduleBeep();
         this.#nextStepTime += this.#stepInterval;
         this.#step = (this.#step + 1) % this.#pattern.length;
-        if (this.#step == 0) {
+        if (this.#step === 0) {
           ++this.#currentBar;
         }
       }
     }
 
     #scheduleBeep() {
-      if (this.#step % this.#subdivisions == 0) {
+      if (this.#step % this.#subdivisions === 0) {
         const beat = Math.trunc(this.#step / this.#subdivisions);
         this.#queue.enqueue({
           beat: beat,
@@ -648,7 +648,7 @@
     }
 
     #update(note) {
-      if (note.beats != this.#beats) {
+      if (note.beats !== this.#beats) {
         this.#beats = note.beats;
         this.#dotsDiv.replaceChildren();
         for (let i = 0; i < this.#beats; ++i) {
@@ -660,7 +660,7 @@
       }
 
       [...this.#dotsDiv.children].forEach((e, i) => {
-        if (i == note.beat) {
+        if (i === note.beat) {
           e.classList.add("current");
         } else {
           e.classList.remove("current");
@@ -669,13 +669,13 @@
 
       let isLastBarOfRepetition;
       if (note.currentBar < this.#prerollBars) {
-        isLastBarOfRepetition = note.currentBar == this.#prerollBars - 1;
+        isLastBarOfRepetition = note.currentBar === this.#prerollBars - 1;
         this.#progressExerciseDiv.innerHTML = `preroll &rarr; exercise ${this.#startExercise + this.#exerciseOffset + 1}`;
         this.#progressRepetitionDiv.innerHTML = IDLE_HTML;
         this.#progressBarDiv.innerHTML = formatProgress("bar", note.currentBar, this.#prerollBars, null, isLastBarOfRepetition);
       } else {
         const [exercise, repetition, bar] = this.#position(note.currentBar - this.#prerollBars);
-        isLastBarOfRepetition = repetition == this.#repetitions - 1 && bar == this.#bars - 1;
+        isLastBarOfRepetition = repetition === this.#repetitions - 1 && bar === this.#bars - 1;
         const isFinished = exercise >= this.#exercises;
         this.#progressExerciseDiv.innerHTML = formatProgress("exercise", exercise, this.#exercises, this.#exerciseOffset);
         this.#progressRepetitionDiv.innerHTML = formatProgress("rep", repetition, this.#repetitions);
@@ -738,7 +738,7 @@
 
     constructor(document, window) {
       const params = new URLSearchParams(window.location.search);
-      const silent = params.get(SILENT_PARAM) == "1";
+      const silent = params.get(SILENT_PARAM) === "1";
       const importPresets = params.get(IMPORT_PRESETS_PARAM);
 
       this.#body = document.body;
@@ -879,7 +879,7 @@
       ];
       for (const input of inputs) {
         input.addEventListener("keydown", e => {
-          if (e.key == "e") {
+          if (e.key === "e") {
             e.preventDefault();
           }
         })
@@ -917,17 +917,17 @@
       });
 
       this.#startStopBtn.addEventListener("click", e => {
-        if (e.target.textContent == START_CAPTION) {
+        if (e.target.textContent === START_CAPTION) {
           this.#startMetronome();
         }
-        else if (e.target.textContent == STOP_CAPTION) {
+        else if (e.target.textContent === STOP_CAPTION) {
           this.#stopMetronome();
         }
       });
 
       document.addEventListener("keydown", e => {
-        if (e.key == " ") {
-          if (this.#startStopBtn != document.activeElement) {
+        if (e.key === " ") {
+          if (this.#startStopBtn !== document.activeElement) {
             this.#startStopBtn.click();
           }
         }
@@ -1116,7 +1116,7 @@
     #stopMetronome() {
       console.assert(this.#tracker && this.#beeper);
 
-      if (this.#startStopBtn.textContent == STOP_CAPTION &&
+      if (this.#startStopBtn.textContent === STOP_CAPTION &&
         this.#tracker.lastExercise &&
         !confirm("Discard current progress? (OK to stop, Esc to restart current exercise with preroll)")) {
         const lastExercise = this.#tracker.lastExercise;
