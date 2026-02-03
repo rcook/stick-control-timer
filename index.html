@@ -677,10 +677,10 @@
         this.#beats = note.beats;
         this.#dotsDiv.replaceChildren();
         for (let i = 0; i < this.#beats; ++i) {
-          const e = document.createElement("div");
-          e.textContent = (i + 1).toString();
-          e.classList.add("dot");
-          this.#dotsDiv.appendChild(e);
+          const element = document.createElement("div");
+          element.textContent = (i + 1).toString();
+          element.classList.add("dot");
+          this.#dotsDiv.appendChild(element);
         }
       }
 
@@ -842,16 +842,16 @@
           }
 
           this.#pushState();
-        } catch (e) {
-          this.#showFetchError(e);
+        } catch (err) {
+          this.#showFetchError(err);
         }
       }
 
       if (this.#readPresets() === null) {
         this.#fetchPresets()
           .then(() => this.#initPresetsUi())
-          .catch(e => {
-            this.#showFetchError(e);
+          .catch(err => {
+            this.#showFetchError(err);
             this.#initPresetsUi();
           });
       } else {
@@ -922,23 +922,23 @@
         this.#exercisesInput,
       ];
       for (const input of inputs) {
-        input.addEventListener("keydown", e => {
-          if (e.key === "e") {
-            e.preventDefault();
+        input.addEventListener("keydown", event => {
+          if (event.key === "e") {
+            event.preventDefault();
           }
         })
       }
 
-      for (const e of this.#paramElements) {
-        e.addEventListener("input", e => {
+      for (const paramElement of this.#paramElements) {
+        paramElement.addEventListener("input", event => {
           this.#presetSelect.selectedIndex = -1;
           this.#pushState();
         });
       }
 
-      this.#beatsSelect.addEventListener("input", e => {
-        if (!e.target.validity.valid) { return; }
-        const beats = parseInt(e.target.value);
+      this.#beatsSelect.addEventListener("input", event => {
+        if (!event.target.validity.valid) { return; }
+        const beats = parseInt(event.target.value);
         if (Number.isNaN(beats)) { return; }
 
         if (!this.#subdivisionsSelect.validity.valid) { return; }
@@ -948,9 +948,9 @@
         this.#patternInput.value = makeDefaultPattern(beats, subdivisions);
       });
 
-      this.#subdivisionsSelect.addEventListener("input", e => {
-        if (!e.target.validity.valid) { return; }
-        const subdivisions = parseInt(e.target.value);
+      this.#subdivisionsSelect.addEventListener("input", event => {
+        if (!event.target.validity.valid) { return; }
+        const subdivisions = parseInt(event.target.value);
         if (Number.isNaN(subdivisions)) { return; }
 
         if (!this.#beatsSelect.validity.valid) { return; }
@@ -960,17 +960,17 @@
         this.#patternInput.value = makeDefaultPattern(beats, subdivisions);
       });
 
-      this.#startStopBtn.addEventListener("click", e => {
-        if (e.target.textContent === START_CAPTION) {
+      this.#startStopBtn.addEventListener("click", event => {
+        if (event.target.textContent === START_CAPTION) {
           this.#startMetronome();
         }
-        else if (e.target.textContent === STOP_CAPTION) {
+        else if (event.target.textContent === STOP_CAPTION) {
           this.#stopMetronome();
         }
       });
 
-      document.addEventListener("keydown", e => {
-        if (e.key === " ") {
+      document.addEventListener("keydown", event => {
+        if (event.key === " ") {
           if (this.#startStopBtn !== document.activeElement) {
             this.#startStopBtn.click();
           }
@@ -981,10 +981,10 @@
     #initPresetsUi() {
       this.#populatePresetsUi();
 
-      this.#presetSelect.addEventListener("change", e => {
-        if (e.target.value.length > 0) {
-          const command = parseInt(e.target.value);
-          e.target.selectedIndex = -1;
+      this.#presetSelect.addEventListener("change", event => {
+        if (event.target.value.length > 0) {
+          const command = parseInt(event.target.value);
+          event.target.selectedIndex = -1;
           switch (command) {
             case SAVE_ID: {
               const name = prompt("Enter preset name");
@@ -1032,19 +1032,19 @@
               this
                 .#fetchPresets()
                 .then(() => this.#populatePresetsUi())
-                .catch(e => this.#showFetchError(e));
+                .catch(err => this.#showFetchError(err));
               break;
             }
           }
           return;
         }
 
-        const selectedOption = e.target.options[e.target.selectedIndex];
+        const selectedOption = event.target.options[event.target.selectedIndex];
         const preset = JSON.parse(selectedOption.dataset.presetJson);
-        for (const e of this.#paramElements) {
-          const m = this.#paramMetadata[e.id];
-          if (Object.hasOwn(preset, m.name)) {
-            e.value = preset[m.name];
+        for (const paramElement of this.#paramElements) {
+          const metadata = this.#paramMetadata[paramElement.id];
+          if (Object.hasOwn(preset, metadata.name)) {
+            paramElement.value = preset[metadata.name];
           }
         }
         this.#pushState();
@@ -1055,7 +1055,7 @@
       function addCommandOption(presetSelect, innerHtml, value = null, disabled = false) {
         const element = document.createElement("option");
         element.innerHTML = innerHtml;
-        if (value) {
+        if (value !== null) {
           element.value = value;
         }
         element.disabled = disabled;
@@ -1090,8 +1090,8 @@
     #pushState() {
       const url = new URL(window.location.href);
       url.searchParams.forEach((v, k) => url.searchParams.delete(k));
-      for (const e of this.#paramElements) {
-        url.searchParams.set(e.id, e.value);
+      for (const paramElement of this.#paramElements) {
+        url.searchParams.set(paramElement.id, paramElement.value);
       }
       window.history.replaceState({}, "", url);
     }
