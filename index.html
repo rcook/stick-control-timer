@@ -145,6 +145,14 @@
       text-align: left;
       padding: 2px 5px 2px 5px;
     }
+
+    .fetch-error {
+      color: darkred;
+      background: #ffe0e0;
+      padding: 0.5rem 1rem;
+      margin: 0.5rem 0;
+      border-radius: 4px;
+    }
   </style>
 </head>
 
@@ -226,6 +234,7 @@
       <div id="progress-bar">&ndash;&ndash;&ndash;</div>
       <div id="dots" class="dots"></div>
     </div>
+    <div id="fetch-error" class="fetch-error" role="alert" hidden></div>
     <div id="controls">
       <div id="buttons">
         <button id="start-stop">Start</button>
@@ -295,6 +304,8 @@
 <script>
   //<![CDATA[
   "use strict";
+
+  const DATA_FILE_NAME = "data.json";
 
   const SAVE_ID = -1;
   const REMOVE_ID = -2;
@@ -714,6 +725,7 @@
     #prerollBarsSelect
     #presetContainerDiv
     #presetSelect
+    #fetchErrorDiv
     #trackerId = 0;
     #audioCtx = new AudioContext();
     #queue = new Queue();
@@ -747,6 +759,7 @@
       this.#prerollBarsSelect = document.getElementById("preroll-bars");
       this.#presetContainerDiv = document.getElementById("preset-container");
       this.#presetSelect = document.getElementById("preset");
+      this.#fetchErrorDiv = document.getElementById("fetch-error");
 
       this.#paramElements = [
         this.#tempoSelect,
@@ -791,21 +804,36 @@
       }
 
       if (this.#readPresets() === null) {
-        this.#fetchPresets().then(() => this.#initPresetsUi());
+        this.#fetchPresets()
+          .then(() => this.#initPresetsUi())
+          .catch(e => {
+            this.#showFetchError(e);
+            this.#initPresetsUi();
+          });
       } else {
         this.#initPresetsUi();
       }
     }
 
+    #showFetchError(e) {
+      this.#fetchErrorDiv.textContent = e.message || "(unknown error)";
+      this.#fetchErrorDiv.hidden = false;
+    }
+
+    #hideFetchError() {
+      this.#fetchErrorDiv.hidden = true;
+      this.#fetchErrorDiv.textContent = "";
+    }
+
     #fetchPresets() {
-      return fetch("data.json").then(response => {
-        if (response.ok) {
+      return fetch(DATA_FILE_NAME, { cache: "no-store" }).then(response => {
+        if (response.ok && false) {
           return response.json();
         } else {
-          throw new Error(`Failed to retrieve data from ${response.url}`);
+          console.error(`Fetch from ${response.url} failed with HTTP status ${response.status}`);
+          throw new Error(`Failed to load default presets from ${DATA_FILE_NAME}`);
         }
-      }).then(data => this.#writePresets(Object.hasOwn(data, "presets") ? data.presets : []))
-        .catch(console.error);
+      }).then(data => this.#writePresets(Object.hasOwn(data, "presets") ? data.presets : []));
     }
 
     #readPresets() {
@@ -957,7 +985,10 @@
               break;
             }
             case RESET_ID: {
-              this.#fetchPresets().then(() => this.#populatePresetsUi());
+              this
+                .#fetchPresets()
+                .then(() => this.#populatePresetsUi())
+                .catch(e => this.#showFetchError(e));
               break;
             }
           }
@@ -1033,6 +1064,7 @@
 
     #startMetronome() {
       console.assert(!this.#tracker && !this.#beeper);
+      this.#hideFetchError();
 
       this.#startStopBtn.textContent = STOP_CAPTION;
       this.#fields.disabled = true;
