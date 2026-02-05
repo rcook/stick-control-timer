@@ -924,10 +924,17 @@
 
     #readPresets() {
       const json = localStorage.getItem("presets");
-      return json === null ? null : JSON.parse(json).toSorted((a, b) => a.name.localeCompare(b.name));
+      if (json === null) { return null; }
+      try {
+        const obj = JSON.parse(json);
+        return Array.isArray(obj) ? obj.toSorted((a, b) => a.name.localeCompare(b.name)) : null;
+      } catch {
+        return null;
+      }
     }
 
     #writePresets(presets) {
+      if (!Array.isArray(presets)) { return []; }
       const sortedPresets = presets.toSorted((a, b) => a.name.localeCompare(b.name));
       const json = JSON.stringify(sortedPresets);
       localStorage.setItem("presets", json);
@@ -935,7 +942,8 @@
     }
 
     #addOrOverwritePreset(preset) {
-      const presets = this.#readPresets().filter(p => p.name.localeCompare(preset.name));
+      const raw = this.#readPresets();
+      const presets = (raw ?? []).filter(p => p.name.localeCompare(preset.name));
       presets.push(preset);
       const newPresets = this.#writePresets(presets);
       return newPresets.findIndex(p => !p.name.localeCompare(preset.name));
@@ -947,9 +955,9 @@
       this.#progressBarDiv.innerHTML = IDLE_HTML;
       this.#dotsDiv.replaceChildren();
 
-      this.#populateSelect(document, this.#tempoSelect, 50, 250);
-      this.#populateSelect(document, this.#barsSelect, 1, 4);
-      this.#populateSelect(document, this.#beatsSelect, 1, 16);
+      this.#populateSelect(this.#tempoSelect, 50, 250);
+      this.#populateSelect(this.#barsSelect, 1, 4);
+      this.#populateSelect(this.#beatsSelect, 1, 16);
 
       this.#startStopBtn.textContent = START_CAPTION;
 
@@ -1058,7 +1066,8 @@
             case REMOVE_ID: {
               const name = prompt("Enter preset name");
               if (name !== null) {
-                this.#writePresets(this.#readPresets().filter(p => p.name.localeCompare(name)));
+                const raw = this.#readPresets();
+                this.#writePresets((raw ?? []).filter(p => p.name.localeCompare(name)));
                 this.#populatePresetsUi();
               }
               break;
@@ -1069,7 +1078,8 @@
               break;
             }
             case EXPORT_ID: {
-              const s = JSON.stringify(this.#readPresets());
+              const presetsToExport = this.#readPresets() ?? [];
+              const s = JSON.stringify(presetsToExport);
               const encoded = btoa(s);
               const url = new URL(window.location.href);
               url.searchParams.forEach((v, k) => url.searchParams.delete(k));
@@ -1115,7 +1125,7 @@
 
       this.#presetSelect.replaceChildren();
 
-      const presets = this.#readPresets();
+      const presets = this.#readPresets() ?? [];
       if (presets.length > 0) {
         for (const preset of presets) {
           const element = document.createElement("option");
@@ -1147,7 +1157,7 @@
       window.history.replaceState({}, "", url);
     }
 
-    #populateSelect(document, select, min, max, htmlFunc = null) {
+    #populateSelect(select, min, max, htmlFunc = null) {
       select.replaceChildren();
       for (let i = min; i <= max; ++i) {
         const e = document.createElement("option");
