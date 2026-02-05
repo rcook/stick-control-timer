@@ -114,6 +114,18 @@
       display: none !important;
     }
 
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     .popup-source {
       position: relative;
       display: inline-block;
@@ -198,8 +210,8 @@
     <div class="popup-source">
       <button type="button" class="label" aria-label="Help" aria-expanded="false"
         aria-controls="help-popup">(?)</button>
-      <div class="popup">
-        <h2>About Stick Control Metronome</h2>
+      <div id="help-popup" class="popup" role="dialog" aria-labelledby="help-heading" aria-modal="false">
+        <h2 id="help-heading" class="visually-hidden">About Stick Control Metronome</h2>
         <p>
           This is a simple metronome and timer app I wrote to help me work through <a
             href="https://www.stonepercussionbooks.com/stick-control.html">Stick Control</a> by George Stone.
@@ -744,7 +756,7 @@
       let isLastBarOfRepetition;
       if (note.currentBar < this.#prerollBars) {
         isLastBarOfRepetition = note.currentBar === this.#prerollBars - 1;
-        this.#progressExerciseDiv.innerHTML = `preroll &rarr; exercise ${this.#startExercise + this.#exerciseOffset + 1}`;
+        this.#progressExerciseDiv.innerHTML = `preroll &rarr; exercise ${this.#exerciseOffset + 1}`;
         this.#progressRepetitionDiv.innerHTML = IDLE_HTML;
         this.#progressBarDiv.innerHTML = formatProgress("bar", note.currentBar, this.#prerollBars, null, isLastBarOfRepetition);
       } else {
@@ -754,7 +766,7 @@
         this.#progressExerciseDiv.innerHTML = formatProgress("exercise", exercise, this.#exercises, this.#exerciseOffset);
         this.#progressRepetitionDiv.innerHTML = formatProgress("rep", repetition, this.#repetitions);
         this.#progressBarDiv.innerHTML = formatProgress("bar", bar, this.#bars, null, isLastBarOfRepetition);
-        this.#lastExercise = exercise;
+        this.#lastExercise = exercise + this.#exerciseOffset + 1;
         if (isFinished) {
           this.#onFinished();
           return false;
@@ -772,7 +784,7 @@
 
     #position(overallBar) {
       const barsInExercise = this.#bars * this.#repetitions;
-      const exercise = Math.trunc(overallBar / barsInExercise) + this.#startExercise;
+      const exercise = Math.trunc(overallBar / barsInExercise);
       const rem = overallBar % barsInExercise;
       const repetition = Math.trunc(rem / this.#bars);
       const bar = rem % this.#bars;
@@ -805,18 +817,20 @@
     #exportUrlCopyBtn
     #exportUrlCloseBtn
     #trackerId = 0;
-    #audioCtx = new AudioContext();
+    #audioCtx = null;
     #queue = new Queue();
     #startExercise = 0;
+    #running = false;
     #beeper = null;
     #tracker = null;
     #paramElements
     #paramMetadata
     #clicks
+    #silent
 
     constructor(document, window) {
       const params = new URLSearchParams(window.location.search);
-      const silent = params.get(SILENT_PARAM) === "1";
+      this.#silent = params.get(SILENT_PARAM) === "1";
       const importPresets = params.get(IMPORT_PRESETS_PARAM);
 
       this.#body = document.body;
@@ -868,13 +882,7 @@
         [this.#prerollBarsSelect.id]: { name: "prerollBars", parse: s => parseOneOf(s, PREROLL_BARS_OPTIONS, DEFAULT_PREROLL_BARS) }
       };
 
-      const volume = silent ? 0.0 : 1.0;
-      this.#clicks = {
-        [Accent.HIGH]: DecayingSawtoothClick.Builder(1760, volume),
-        [Accent.MEDIUM]: DecayingSawtoothClick.Builder(880, volume),
-        [Accent.LOW]: DecayingSawtoothClick.Builder(440, volume),
-        [Accent.SILENT]: null
-      };
+      this.#clicks = null;
 
       this.#initUi(document);
 
@@ -914,6 +922,13 @@
       } else {
         this.#initPresetsUi();
       }
+    }
+
+    #getAudioContext() {
+      if (this.#audioCtx === null) {
+        this.#audioCtx = new AudioContext();
+      }
+      return this.#audioCtx;
     }
 
     #showFetchError(e) {
@@ -975,6 +990,17 @@
       this.#populateSelect(this.#beatsSelect, 1, 16);
 
       this.#startStopBtn.textContent = START_CAPTION;
+      this.#running = false;
+
+      const helpBtn = this.#body.querySelector(".popup-source .label");
+      const helpPopup = document.getElementById("help-popup");
+      if (helpBtn && helpPopup) {
+        helpBtn.addEventListener("click", () => {
+          const expanded = helpBtn.getAttribute("aria-expanded") === "true";
+          helpBtn.setAttribute("aria-expanded", String(!expanded));
+          helpPopup.classList.toggle("popup-visible", !expanded);
+        });
+      }
 
       this.#exportUrlCopyBtn.addEventListener("click", () => {
         this.#exportUrlInput.select();
@@ -1033,12 +1059,11 @@
         this.#patternInput.value = makeDefaultPattern(beats, subdivisions);
       });
 
-      this.#startStopBtn.addEventListener("click", event => {
-        if (event.target.textContent === START_CAPTION) {
-          this.#startMetronome();
-        }
-        else if (event.target.textContent === STOP_CAPTION) {
+      this.#startStopBtn.addEventListener("click", () => {
+        if (this.#running) {
           this.#stopMetronome();
+        } else {
+          this.#startMetronome();
         }
       });
 
@@ -1204,7 +1229,18 @@
     #startMetronome() {
       console.assert(!this.#tracker && !this.#beeper);
       this.#hideFetchError();
+      const audioCtx = this.#getAudioContext();
+      if (this.#clicks === null) {
+        const volume = this.#silent ? 0.0 : 1.0;
+        this.#clicks = {
+          [Accent.HIGH]: DecayingSawtoothClick.Builder(1760, volume),
+          [Accent.MEDIUM]: DecayingSawtoothClick.Builder(880, volume),
+          [Accent.LOW]: DecayingSawtoothClick.Builder(440, volume),
+          [Accent.SILENT]: null
+        };
+      }
 
+      this.#running = true;
       this.#startStopBtn.textContent = STOP_CAPTION;
       this.#fields.disabled = true;
 
@@ -1219,7 +1255,7 @@
       const prerollBars = parseInt(this.#prerollBarsSelect.value, 10);
 
       this.#beeper = new Beeper({
-        audioCtx: this.#audioCtx,
+        audioCtx: audioCtx,
         tempo: tempo,
         beats: beats,
         subdivisions: subdivisions,
@@ -1230,7 +1266,7 @@
 
       this.#tracker = new Tracker({
         id: ++this.#trackerId,
-        audioCtx: this.#audioCtx,
+        audioCtx: audioCtx,
         queue: this.#queue,
         body: this.#body,
         progressExerciseDiv: this.#progressExerciseDiv,
@@ -1255,7 +1291,7 @@
     #stopMetronome() {
       console.assert(this.#tracker && this.#beeper);
 
-      if (this.#startStopBtn.textContent === STOP_CAPTION &&
+      if (this.#running &&
         this.#tracker.lastExercise &&
         !confirm("Discard current progress? (OK to stop, Esc to restart current exercise with preroll)")) {
         const lastExercise = this.#tracker.lastExercise;
@@ -1288,6 +1324,7 @@
       this.#progressBarDiv.innerHTML = IDLE_HTML;
       this.#dotsDiv.replaceChildren();
 
+      this.#running = false;
       this.#startStopBtn.textContent = START_CAPTION;
       this.#fields.disabled = false;
 
