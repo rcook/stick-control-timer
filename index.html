@@ -1044,7 +1044,12 @@
 
       document.addEventListener("keydown", event => {
         if (event.key !== " " && event.key !== "Spacebar") { return; }
-        if (this.#startStopBtn !== document.activeElement) {
+        const active = document.activeElement;
+        if (active && (active.tagName === "INPUT" || active.tagName === "SELECT" || active.tagName === "TEXTAREA")) {
+          return;
+        }
+        event.preventDefault();
+        if (this.#startStopBtn !== active) {
           this.#startStopBtn.click();
         }
       });
@@ -1116,11 +1121,26 @@
         }
 
         const selectedOption = event.target.options[event.target.selectedIndex];
-        const preset = JSON.parse(selectedOption.dataset.presetJson);
+        const json = selectedOption?.dataset.presetJson;
+        if (!json) { return; }
+
+        let preset;
+        try {
+          preset = JSON.parse(json);
+        } catch {
+          return;
+        }
+
+        if (!preset || typeof preset !== "object") { return; }
+
         for (const paramElement of this.#paramElements) {
           const metadata = this.#paramMetadata[paramElement.id];
           if (!Object.hasOwn(preset, metadata.name)) { continue; }
-          paramElement.value = preset[metadata.name];
+          let value = preset[metadata.name];
+          if (paramElement.tagName === "SELECT") {
+            value = String(value);
+          }
+          paramElement.value = value;
         }
         this.#pushState();
       })
