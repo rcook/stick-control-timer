@@ -114,15 +114,28 @@
       display: none !important;
     }
 
-    .popup-source .label {
-      color: lightgreen;
+    .popup-source {
+      position: relative;
+      display: inline-block;
     }
 
-    .popup-source:hover {
+    .popup-source .label {
+      color: lightgreen;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font: inherit;
+      padding: 0.25em;
+    }
+
+    .popup-source:hover .label,
+    .popup-source:focus-within .label {
       text-decoration: underline;
     }
 
-    .popup-source:hover .popup {
+    .popup-source:hover .popup,
+    .popup-source:focus-within .popup,
+    .popup-source .popup.popup-visible {
       visibility: visible;
       filter: drop-shadow(8px 8px 10px grey);
     }
@@ -135,7 +148,7 @@
       background-color: whitesmoke;
       padding: 10px;
       border: 1px solid black;
-      max-width: 40vw;
+      width: 40vw;
       height: 50vh;
       overflow-y: scroll;
     }
@@ -183,8 +196,10 @@
 <body>
   <div id="container">
     <div class="popup-source">
-      <a class="label">(?)</a>
+      <button type="button" class="label" aria-label="Help" aria-expanded="false"
+        aria-controls="help-popup">(?)</button>
       <div class="popup">
+        <h2>About Stick Control Metronome</h2>
         <p>
           This is a simple metronome and timer app I wrote to help me work through <a
             href="https://www.stonepercussionbooks.com/stick-control.html">Stick Control</a> by George Stone.
