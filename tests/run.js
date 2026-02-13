@@ -31,6 +31,10 @@
     assertEqual(Accent.LOW, "C", "Accent.LOW");
     assertEqual(Accent.SILENT, "D", "Accent.SILENT");
 
+    assertEqual(parseBool("false"), false, "parseBool(\"false\"");
+    assertEqual(parseBool("true"), true, "parseBool(\"true\"");
+    assertEqual(parseBool(""), false, "parseBool(\"\"");
+
     assertEqual(parseNumber(null, 0, 100, 50), 50, "parseNumber(null)");
     assertEqual(parseNumber(undefined, 0, 100, 50), 50, "parseNumber(undefined)");
     assertEqual(parseNumber("x", 0, 100, 50), 50, "parseNumber(NaN string)");

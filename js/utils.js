@@ -8,6 +8,10 @@
     SILENT: "D"
   });
 
+  function parseBool(s) {
+    return s === "true";
+  }
+
   function parseNumber(s, min, max, defaultValue) {
     if (s === null || s === undefined) { return defaultValue; }
     const value = parseInt(s, 10);
@@ -55,6 +59,7 @@
   }
 
   window.Accent = Accent;
+  window.parseBool = parseBool;
   window.parseNumber = parseNumber;
   window.parseOneOf = parseOneOf;
   window.makeDefaultPattern = makeDefaultPattern;

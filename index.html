@@ -16,6 +16,11 @@
       background-color: limegreen;
     }
 
+    html.dark body {
+      background-color: #1a1a1a;
+      color: #e0e0e0;
+    }
+
     body.last {
       animation: blink 0.75s linear infinite;
     }
@@ -31,6 +36,24 @@
 
       100% {
         background-color: white;
+      }
+    }
+
+    html.dark body.last {
+      animation: blink-dark 0.75s linear infinite;
+    }
+
+    @keyframes blink-dark {
+      0% {
+        background-color: #2a2a2a;
+      }
+
+      50% {
+        background-color: #8b2020;
+      }
+
+      100% {
+        background-color: #2a2a2a;
       }
     }
 
@@ -58,9 +81,19 @@
       color: lime;
     }
 
+    html.dark .dot {
+      border-color: #2d5a2d;
+      color: #6b9e6b;
+    }
+
     .current {
       background-color: lightgreen;
       color: darkgreen;
+    }
+
+    html.dark .current {
+      background-color: #2d5a2d;
+      color: #b8e0b8;
     }
 
     #progress-repetitions,
@@ -70,6 +103,11 @@
 
     #controls {
       display: flex;
+      flex-wrap: wrap;
+    }
+
+    #controls>div:last-child {
+      width: 100%;
     }
 
     #fields {
@@ -93,12 +131,29 @@
       padding: 5px;
     }
 
+    html.dark #fields input,
+    html.dark #fields select {
+      background-color: #2a2a2a;
+      color: #e0e0e0;
+      border: 1px solid #444;
+    }
+
     #buttons {
       align-content: center;
     }
 
     #buttons button {
       height: 32px;
+    }
+
+    html.dark #buttons button {
+      background-color: #2a2a2a;
+      color: #e0e0e0;
+      border: 1px solid #444;
+    }
+
+    html.dark #buttons button:hover {
+      background-color: #3a3a3a;
     }
 
     #progress-exercise {
@@ -128,6 +183,10 @@
       padding: 0.25em;
     }
 
+    html.dark .popup-source .label {
+      color: #7cce7c;
+    }
+
     .popup-source:hover .label,
     .popup-source:focus-within .label {
       text-decoration: underline;
@@ -138,6 +197,12 @@
     .popup-source .popup.popup-visible {
       visibility: visible;
       filter: drop-shadow(8px 8px 10px grey);
+    }
+
+    html.dark .popup-source:hover .popup,
+    html.dark .popup-source:focus-within .popup,
+    html.dark .popup-source .popup.popup-visible {
+      filter: drop-shadow(8px 8px 12px rgba(0, 0, 0, 0.8));
     }
 
     .popup {
@@ -151,6 +216,20 @@
       width: 40vw;
       height: 50vh;
       overflow-y: scroll;
+    }
+
+    html.dark .popup {
+      background-color: #2a2a2a;
+      color: #e0e0e0;
+      border-color: #444;
+    }
+
+    .popup a {
+      color: inherit;
+    }
+
+    html.dark .popup a {
+      color: #7cce7c;
     }
 
     .popup th,
@@ -167,12 +246,24 @@
       border-radius: 4px;
     }
 
+    html.dark .fetch-error {
+      color: #f0a0a0;
+      background: #4a2020;
+      border: 1px solid #6a3030;
+    }
+
     .export-url-container {
       margin: 0.5rem 0;
       padding: 0.5rem;
       background: #f5f5f5;
       border-radius: 4px;
       border: 1px solid #ccc;
+    }
+
+    html.dark .export-url-container {
+      background: #2a2a2a;
+      border-color: #444;
+      color: #e0e0e0;
     }
 
     .export-url-container label {
@@ -344,6 +435,10 @@
           <label for="preset">presets</label>
         </div>
       </fieldset>
+      <div>
+        <input id="dark-mode" type="checkbox" title="Use dark theme">
+        <label for="dark-mode">dark mode</label>
+      </div>
     </div>
   </div>
 </body>
@@ -756,6 +851,7 @@
     #subdivisionsSelect
     #patternInput
     #prerollBarsSelect
+    #darkModeCheckbox
     #presetContainerDiv
     #presetSelect
     #fetchErrorDiv
@@ -785,6 +881,7 @@
       this.#dotsDiv = document.getElementById("dots");
       this.#startStopBtn = document.getElementById("start-stop");
       this.#fields = document.getElementById("fields");
+      this.#darkModeCheckbox = document.getElementById("dark-mode");
       this.#tempoSelect = document.getElementById("tempo");
       this.#startExerciseInput = document.getElementById("start-exercise");
       this.#exercisesInput = document.getElementById("exercises");
@@ -803,6 +900,7 @@
       this.#exportUrlCloseBtn = document.getElementById("export-url-close");
 
       this.#paramElements = [
+        this.#darkModeCheckbox,
         this.#tempoSelect,
         this.#startExerciseInput,
         this.#exercisesInput,
@@ -814,6 +912,16 @@
         this.#prerollBarsSelect
       ].toSorted((a, b) => a.id.localeCompare(b.id));
       this.#paramMetadata = {
+        [this.#darkModeCheckbox.id]: {
+          name: "darkMode",
+          parse: parseBool,
+          getValue: () => this.#darkModeCheckbox.checked,
+          setValue: value => {
+            this.#darkModeCheckbox.checked = value;
+            document.documentElement.classList.toggle("dark", value);
+          },
+          onChange: () => document.documentElement.classList.toggle("dark", this.#darkModeCheckbox.checked)
+        },
         [this.#tempoSelect.id]: { name: "tempo", parse: s => parseNumber(s, TEMPO_MIN, TEMPO_MAX, DEFAULT_TEMPO) },
         [this.#startExerciseInput.id]: { name: "startExercise", parse: s => parseNumber(s, START_EXERCISE_MIN, START_EXERCISE_MAX, DEFAULT_START_EXERCISE) },
         [this.#exercisesInput.id]: { name: "exercises", parse: s => parseNumber(s, EXERCISES_MIN, EXERCISES_MAX, DEFAULT_EXERCISES) },
@@ -949,7 +1057,17 @@
       const params = new URLSearchParams(window.location.search);
       for (const paramElement of this.#paramElements) {
         const metadata = this.#paramMetadata[paramElement.id];
-        paramElement.value = metadata.parse(params.get(paramElement.id));
+        const value = metadata.parse(params.get(paramElement.id));
+
+        if (Object.hasOwn(metadata, "setValue")) {
+          metadata.setValue(value);
+        } else {
+          paramElement.value = value;
+        }
+
+        if (Object.hasOwn(metadata, "onChange")) {
+          paramElement.addEventListener("change", metadata.onChange);
+        }
       }
 
       const inputs = [
@@ -1030,6 +1148,7 @@
               if (name !== null) {
                 const idx = this.#addOrOverwritePreset({
                   name: name,
+                  darkMode: this.#darkModeCheckbox.checked,
                   tempo: parseInt(this.#tempoSelect.value, 10),
                   startExercise: this.#startExerciseInput.valueAsNumber,
                   exercises: this.#exercisesInput.valueAsNumber,
@@ -1102,7 +1221,12 @@
           if (paramElement.tagName === "SELECT") {
             value = String(value);
           }
-          paramElement.value = value;
+
+          if (Object.hasOwn(metadata, "setValue")) {
+            metadata.setValue(value);
+          } else {
+            paramElement.value = value;
+          }
         }
         this.#pushState();
       })
@@ -1148,7 +1272,9 @@
       const url = new URL(window.location.href);
       url.searchParams.forEach((v, k) => url.searchParams.delete(k));
       for (const paramElement of this.#paramElements) {
-        url.searchParams.set(paramElement.id, paramElement.value);
+        const metadata = this.#paramMetadata[paramElement.id];
+        const value = Object.hasOwn(metadata, "getValue") ? metadata.getValue() : paramElement.value;
+        url.searchParams.set(paramElement.id, value.toString());
       }
       window.history.replaceState({}, "", url);
     }
@@ -1225,8 +1351,7 @@
         this.#startExercise = lastExercise;
         this.#startMetronome();
         return;
-      }
-      else {
+      } else {
         this.#setMetronomeIdle();
       }
     }
