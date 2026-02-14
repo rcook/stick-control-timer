@@ -436,8 +436,8 @@
         </div>
       </fieldset>
       <div>
-        <input id="dark-mode" type="checkbox" title="Use dark theme">
-        <label for="dark-mode">dark mode</label>
+        <input id="dark" type="checkbox" title="Use dark theme">
+        <label for="dark">dark</label>
       </div>
     </div>
   </div>
@@ -834,7 +834,7 @@
     }
   }
 
-  class DarkModeParam extends CheckboxParam {
+  class DarkParam extends CheckboxParam {
     constructor(name, id) {
       super(name, id);
       this.element.addEventListener("change", () => document.documentElement.classList.toggle("dark", this.element.checked));
@@ -898,7 +898,7 @@
     #dotsDiv
     #startStopBtn
     #fields
-    #darkModeParam
+    #darkParam
     #tempoParam
     #startExerciseParam
     #exercisesParam
@@ -936,7 +936,7 @@
       this.#dotsDiv = document.getElementById("dots");
       this.#startStopBtn = document.getElementById("start-stop");
       this.#fields = document.getElementById("fields");
-      this.#darkModeParam = new DarkModeParam("darkMode", "dark-mode");
+      this.#darkParam = new DarkParam("dark", "dark");
       this.#tempoParam = new IntParam("tempo", "tempo", TEMPO_MIN, TEMPO_MAX, DEFAULT_TEMPO);
       this.#startExerciseParam = new IntParam("startExercise", "start-exercise", START_EXERCISE_MIN, START_EXERCISE_MAX, DEFAULT_START_EXERCISE)
       this.#exercisesParam = new IntParam("exercises", "exercises", EXERCISES_MIN, EXERCISES_MAX, DEFAULT_EXERCISES);
@@ -955,7 +955,7 @@
       this.#exportUrlCloseBtn = document.getElementById("export-url-close");
 
       this.#params = [
-        this.#darkModeParam,
+        this.#darkParam,
         this.#tempoParam,
         this.#startExerciseParam,
         this.#exercisesParam,
