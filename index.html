@@ -657,8 +657,9 @@
       this.stop();
       this.#nextStepTime = this.#audioCtx.currentTime;
       this.#step = 0;
-      this.#intervalId = setInterval(() => { this.#scheduleBeeps() }, this.#interval);
       this.#currentBar = 0;
+      this.#scheduleBeeps();
+      this.#intervalId = setInterval(() => { this.#scheduleBeeps() }, this.#interval);
     }
 
     stop() {
