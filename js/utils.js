@@ -16,9 +16,7 @@
     get id() { return this.#id; }
     get element() { return this.#element; }
 
-    compareTo(other) {
-      this.#id.localeCompare(other.#id)
-    }
+    compareTo(other) { return this.#id.localeCompare(other.#id); }
   }
 
   class InputOrSelectParam extends Param {
