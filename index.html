@@ -161,6 +161,21 @@
       color: #e0e0e0;
     }
 
+    #estimated-runtime-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+
+    #estimated-runtime {
+      font-variant-numeric: tabular-nums;
+      min-width: 3ch;
+    }
+
+    html.dark #estimated-runtime {
+      color: #e0e0e0;
+    }
+
     html.dark #buttons button {
       background-color: #2a2a2a;
       color: #e0e0e0;
@@ -455,6 +470,11 @@
       <div>
         <input id="dark" type="checkbox" title="Use dark theme">
         <label for="dark">dark</label>
+      </div>
+      <div id="estimated-runtime-wrap">
+        <span id="estimated-runtime-label">Estimated runtime:</span>
+        <span id="estimated-runtime" aria-labelledby="estimated-runtime-label"
+          role="status">&ndash;&ndash;&ndash;</span>
       </div>
     </div>
   </div>
@@ -936,6 +956,7 @@
     #elapsedTimerSpan
     #elapsedTimerIntervalId = null
     #elapsedTimerStart = 0
+    #estimatedRuntimeSpan
     #fields
     #darkParam
     #tempoParam
@@ -981,6 +1002,7 @@
       this.#dotsDiv = document.getElementById("dots");
       this.#startStopBtn = document.getElementById("start-stop");
       this.#elapsedTimerSpan = document.getElementById("elapsed-timer");
+      this.#estimatedRuntimeSpan = document.getElementById("estimated-runtime");
       this.#fields = document.getElementById("fields");
       this.#darkParam = new DarkParam("dark", "dark");
       this.#tempoParam = new IntParam("tempo", "tempo", TEMPO_MIN, TEMPO_MAX, DEFAULT_TEMPO);
@@ -1159,8 +1181,11 @@
         p.element.addEventListener("input", event => {
           this.#presetSelect.selectedIndex = -1;
           this.#pushState();
+          this.#updateEstimatedRuntime();
         });
       }
+
+      this.#updateEstimatedRuntime();
 
       this.#beatsParam.element.addEventListener("input", event => {
         if (!event.target.validity.valid) { return; }
@@ -1206,6 +1231,25 @@
           this.#startStopBtn.click();
         }
       });
+    }
+
+    #updateEstimatedRuntime() {
+      const tempo = Math.max(1, this.#tempoParam.value);
+      const exercises = this.#exercisesParam.value;
+      const repetitions = this.#repetitionsParam.value;
+      const bars = this.#barsParam.value;
+      const beats = this.#beatsParam.value;
+
+      let totalSeconds;
+      if (!Number.isFinite(exercises) || !Number.isFinite(repetitions) || !Number.isFinite(bars) || !Number.isFinite(beats) ||
+        exercises < 1 || repetitions < 1 || bars < 1 || beats < 1) {
+        totalSeconds = 0;
+      } else {
+        const totalBars = exercises * repetitions * bars;
+        const secondsPerBar = beats * (60 / tempo);
+        totalSeconds = totalBars * secondsPerBar;
+      }
+      this.#estimatedRuntimeSpan.textContent = formatElapsed(totalSeconds);
     }
 
     #initPresetsUi() {
@@ -1290,6 +1334,7 @@
           p.value = value;
         }
         this.#pushState();
+        this.#updateEstimatedRuntime();
       })
     }
 
