@@ -67,6 +67,10 @@
     assertEqual(formatProgress("rep", 2, 20), "rep 3 of 20", "formatProgress no offset 2");
     assertEqual(formatProgress("exercise", 0, 24, 5), "exercise 6 (1 of 24)", "formatProgress with offset");
     assertEqual(formatProgress("bar", 3, 4, null, true), "bar 4 of 4 (get ready!)", "formatProgress get ready");
+
+    assertEqual(formatElapsed(0), "0:00", "formatElapsed(0)");
+    assertEqual(formatElapsed(100), "1:40", "formatElapsed(100)");
+    assertEqual(formatElapsed(1000), "16:40", "formatElapsed(1000)");
   }
 
   const element = document.getElementById("test-results");
