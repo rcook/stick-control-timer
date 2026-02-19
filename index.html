@@ -146,7 +146,7 @@
       height: 32px;
     }
 
-    #elapsed-timer {
+    #elapsed-time {
       position: absolute;
       top: 0;
       right: 0;
@@ -157,7 +157,7 @@
       min-width: 3ch;
     }
 
-    html.dark #elapsed-timer {
+    html.dark #elapsed-time {
       color: #e0e0e0;
     }
 
@@ -318,7 +318,7 @@
 <body>
   <div id="container">
     <div class="popup-source">
-      <span id="elapsed-timer" aria-live="polite">&ndash;&ndash;&ndash;</span>
+      <span id="elapsed-time" aria-live="polite">&ndash;&ndash;&ndash;</span>
       <button type="button" class="label" aria-label="Help" aria-expanded="false"
         aria-controls="help-popup">(?)</button>
       <div id="help-popup" class="popup">
@@ -953,7 +953,7 @@
     #progressBarDiv
     #dotsDiv
     #startStopBtn
-    #elapsedTimerSpan
+    #elapsedTimeSpan
     #elapsedTimerIntervalId = null
     #elapsedTimerStart = 0
     #estimatedRuntimeSpan
@@ -1001,7 +1001,7 @@
       this.#progressBarDiv = document.getElementById("progress-bar");
       this.#dotsDiv = document.getElementById("dots");
       this.#startStopBtn = document.getElementById("start-stop");
-      this.#elapsedTimerSpan = document.getElementById("elapsed-timer");
+      this.#elapsedTimeSpan = document.getElementById("elapsed-time");
       this.#estimatedRuntimeSpan = document.getElementById("estimated-runtime");
       this.#fields = document.getElementById("fields");
       this.#darkParam = new DarkParam("dark", "dark");
@@ -1403,10 +1403,10 @@
       this.#fields.disabled = true;
 
       this.#elapsedTimerStart = performance.now();
-      this.#elapsedTimerSpan.textContent = formatElapsed(0);
+      this.#elapsedTimeSpan.textContent = formatElapsed(0);
       this.#elapsedTimerIntervalId = setInterval(() => {
         const seconds = (performance.now() - this.#elapsedTimerStart) / 1000;
-        this.#elapsedTimerSpan.textContent = formatElapsed(seconds);
+        this.#elapsedTimeSpan.textContent = formatElapsed(seconds);
       }, 500);
 
       const tempo = Math.max(TEMPO_MIN, this.#tempoParam.value);
@@ -1475,7 +1475,7 @@
         this.#elapsedTimerIntervalId = null;
       }
 
-      this.#elapsedTimerSpan.innerHTML = IDLE_HTML;
+      this.#elapsedTimeSpan.innerHTML = IDLE_HTML;
 
       if (this.#beeper) {
         this.#beeper.stop();
