@@ -1231,6 +1231,14 @@
           this.#startStopBtn.click();
         }
       });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          this.#ensureAudioContextRunning();
+        }
+      });
+      window.addEventListener("pageshow", () => this.#ensureAudioContextRunning());
+      window.addEventListener("focus", () => this.#ensureAudioContextRunning());
     }
 
     #updateEstimatedRuntime() {
@@ -1395,9 +1403,17 @@
       }
     }
 
+    #ensureAudioContextRunning() {
+      if (this.#audioCtx.state !== "suspended") {
+        return;
+      }
+      this.#audioCtx.resume().catch(() => { });
+    }
+
     #startMetronome() {
       console.assert(!this.#tracker && !this.#beeper);
       this.#hideFetchError();
+      this.#ensureAudioContextRunning();
 
       this.#startStopBtn.textContent = STOP_CAPTION;
       this.#fields.disabled = true;
